@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+# Hanif CLI - Personal productivity CLI tool
+# Version: 1.0.0
+
+set -euo pipefail
+
+# Determine the installation directory
+# This works for both direct installation and npm/homebrew
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+  SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+
+# Set up library path
+LIB_DIR="${SCRIPT_DIR}/../lib"
+COMMANDS_DIR="${LIB_DIR}/commands"
+UTILS_DIR="${LIB_DIR}/utils"
+FUNCTIONS_DIR="${LIB_DIR}/functions"
+
+# Source common utilities
+# shellcheck source=../lib/utils/common.sh
+source "${UTILS_DIR}/common.sh"
+
+# CLI Version
+VERSION="1.0.0"
+
+# Main command dispatcher
+main() {
+  # Handle no arguments
+  if [[ $# -eq 0 ]]; then
+    show_usage
+    exit 0
+  fi
+
+  local command="$1"
+  shift
+
+  case "$command" in
+    git)
+      # shellcheck source=../lib/commands/git.sh
+      source "${COMMANDS_DIR}/git.sh"
+      git_command "$@"
+      ;;
+    
+    help|--help|-h)
+      # shellcheck source=../lib/commands/help.sh
+      source "${COMMANDS_DIR}/help.sh"
+      show_help "$@"
+      ;;
+    
+    version|--version|-v)
+      echo "hanif CLI v${VERSION}"
+      ;;
+    
+    *)
+      echo "❌ Unknown command: $command"
+      echo ""
+      show_usage
+      exit 1
+      ;;
+  esac
+}
+
+# Show basic usage
+show_usage() {
+  cat << 'EOF'
+┌─────────────────────────────────────────────┐
+│         Hanif CLI - Personal Tools          │
+└─────────────────────────────────────────────┘
+
+Usage: hanif <command> [options]
+
+Commands:
+  git <subcommand>    Git helper commands
+  help [command]      Show detailed help
+  version             Show version information
+
+Examples:
+  hanif git newfeature "add login"
+  hanif git up
+  hanif help git
+
+For more information: hanif help
+EOF
+}
+
+# Run main function
+main "$@"

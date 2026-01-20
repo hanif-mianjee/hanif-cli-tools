@@ -1,0 +1,69 @@
+# GitHub Actions CI/CD
+
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Install shellcheck
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install shellcheck
+          fi
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x bin/hanif
+          chmod +x tests/*.sh
+          chmod +x scripts/*.sh
+      
+      - name: Run tests
+        run: bash tests/run-tests.sh
+      
+      - name: Run linter
+        run: |
+          shellcheck bin/hanif lib/**/*.sh || true
+      
+      - name: Test CLI
+        run: |
+          ./bin/hanif version
+          ./bin/hanif help
+  
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      
+      - name: Run shellcheck
+        run: |
+          shellcheck bin/hanif lib/**/*.sh || true
