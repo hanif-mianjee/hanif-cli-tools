@@ -17,6 +17,11 @@ show_help() {
       show_git_help
       ;;
     
+    squash)
+      source "${COMMANDS_DIR}/squash.sh"
+      show_squash_help
+      ;;
+    
     *)
       echo "❌ No help available for: $topic"
       echo ""
@@ -40,6 +45,7 @@ USAGE
 
 COMMANDS
   git <subcommand>     Git workflow helpers
+  squash <count>       Interactive commit squashing
   help [topic]         Show help
   version              Show version
 
@@ -51,12 +57,23 @@ GIT COMMANDS
   clean                Clean deleted branches
   rb <branch>          Rebase onto branch
 
+SQUASH COMMAND
+  Interactive commit squashing with smart message formatting
+  
+  hanif squash <count>
+    → Shows last N commits, select which to squash into
+    → Optionally provide custom message
+    → Preserves all commits with hashes in message
+
 EXAMPLES
   hanif git sync
   hanif git nf "add login"
   hanif git nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
-  hanif git up
+  hanif squash 5
+    → Interactively squash last 5 commits
+  hanif help squash
+  hanif help git
 
 ADDING COMMANDS
   1. Create lib/commands/mycommand.sh

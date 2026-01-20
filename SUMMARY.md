@@ -17,19 +17,27 @@ bash scripts/dev-install.sh
 # Use it
 hanif git sync
 hanif git nf "my feature"
+hanif squash 5
 ```
 
 ## Built-In Commands
 
 ### Git Helpers
 - `hanif git sync` - Full sync (update, rebase, clean) ⭐
-- `hanif git nf "desc"` - Create feature branch
+- `hanif git nf "desc"` - Create feature branch (with JIRA support)
 - `hanif git up` - Update main
 - `hanif git upall` - Update all branches
 - `hanif git clean` - Remove deleted branches
 - `hanif git rb main` - Rebase onto main
 
 **Note:** Unknown git commands pass through to git
+
+### Squash
+- `hanif squash <count>` - Interactive commit squashing ⭐
+  - Choose which commit to squash into
+  - Optional custom message
+  - Preserves all commits with hashes
+  - Supports root squashing and re-squashing
 
 ## Add Your Own Commands
 
