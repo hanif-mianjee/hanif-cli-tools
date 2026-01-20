@@ -1,19 +1,14 @@
 {
   "name": "hanif-cli",
   "version": "1.0.0",
-  "description": "Personal productivity CLI tool with git helpers and daily workflow automation",
+  "description": "Simple, extensible CLI for daily workflows",
   "main": "bin/hanif",
   "bin": {
     "hanif": "./bin/hanif"
   },
   "scripts": {
     "test": "bash tests/run-tests.sh",
-    "lint": "shellcheck bin/hanif lib/**/*.sh",
-    "format": "shfmt -w -i 2 bin/hanif lib/**/*.sh",
-    "install-dev": "bash scripts/dev-install.sh",
-    "uninstall-dev": "bash scripts/dev-uninstall.sh",
-    "build": "bash scripts/build.sh",
-    "prepublishOnly": "npm test && npm run lint"
+    "install-dev": "bash scripts/dev-install.sh"
   },
   "repository": {
     "type": "git",
@@ -21,37 +16,18 @@
   },
   "keywords": [
     "cli",
-    "git",
     "productivity",
     "automation",
     "workflow",
-    "developer-tools",
-    "git-helper",
-    "shell",
-    "bash"
+    "git"
   ],
   "author": "Hanif Mianjee",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/yourusername/hanif-cli-tools/issues"
-  },
-  "homepage": "https://github.com/yourusername/hanif-cli-tools#readme",
-  "engines": {
-    "node": ">=14.0.0"
-  },
-  "os": [
-    "darwin",
-    "linux"
-  ],
   "preferGlobal": true,
   "files": [
     "bin/",
     "lib/",
     "README.md",
     "LICENSE"
-  ],
-  "devDependencies": {
-    "shellcheck": "^0.9.0",
-    "shfmt": "^3.6.0"
-  }
+  ]
 }

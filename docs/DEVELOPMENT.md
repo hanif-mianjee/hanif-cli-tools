@@ -1,8 +1,108 @@
 # Development Guide
 
-This guide covers advanced development topics for contributing to Hanif CLI.
+## Quick Setup
 
-## Architecture
+```bash
+# Clone and install
+git clone https://github.com/yourusername/hanif-cli-tools.git
+cd hanif-cli-tools
+bash scripts/dev-install.sh
+
+# Test
+hanif version
+```
+
+## Adding Commands
+
+### 1. Create Command File
+
+```bash
+# lib/commands/docker.sh
+docker_handler() {
+  case "$1" in
+    clean)
+      info "Cleaning docker..."
+      docker system prune -af
+      success "Done!"
+      ;;
+    *)
+      docker "$@"
+      ;;
+  esac
+}
+```
+
+### 2. Register Command
+
+Edit `bin/hanif`, add:
+
+```bash
+docker)
+  source "${COMMANDS_DIR}/docker.sh"
+  docker_handler "$@"
+  ;;
+```
+
+### 3. Use It
+
+```bash
+hanif docker clean
+hanif docker ps
+```
+
+## Available Utilities
+
+From `lib/utils/common.sh`:
+
+```bash
+info "Message"        # Blue ℹ
+success "Message"     # Green ✓
+warning "Message"     # Yellow ⚠
+error "Message"       # Red ✗
+
+is_git_repo           # Check if in git repo
+confirm "Question?"   # Y/N prompt
+```
+
+## Testing
+
+```bash
+# Run all tests
+bash tests/run-tests.sh
+
+# Create test file
+# tests/test-mycommand.sh
+source "$(dirname "$0")/test-framework.sh"
+
+test_my_feature() {
+  assert_success "Works" hanif mycommand
+}
+
+suite "My Tests"
+run_test test_my_feature
+print_summary
+```
+
+## Project Structure
+
+```
+bin/hanif              # Main CLI entry
+lib/
+  commands/            # Command handlers (add yours here)
+  functions/           # Reusable functions
+  utils/common.sh      # Helpers (info, success, error, etc.)
+tests/                 # Test files
+scripts/               # Build/install scripts
+```
+
+## Publishing
+
+```bash
+# Update version in package.json and bin/hanif
+npm publish
+```
+
+That's it! Keep it simple.
 
 ### Component Overview
 

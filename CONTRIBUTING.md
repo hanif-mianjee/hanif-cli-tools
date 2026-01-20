@@ -1,15 +1,52 @@
-# Contributing to Hanif CLI
+# Contributing
 
-Thank you for considering contributing to Hanif CLI! This document provides guidelines and instructions for contributing.
+Thanks for your interest! This is a simple, personal CLI tool that's easy to extend.
 
-## Code of Conduct
+## Quick Start
 
-- Be respectful and inclusive
-- Welcome newcomers and help them learn
-- Focus on constructive feedback
-- Assume good intentions
+```bash
+# Fork and clone
+git clone https://github.com/yourusername/hanif-cli-tools.git
+cd hanif-cli-tools
 
-## Getting Started
+# Install locally
+bash scripts/dev-install.sh
+
+# Make changes, test
+hanif version
+bash tests/run-tests.sh
+```
+
+## Adding Commands
+
+1. Create `lib/commands/yourcommand.sh`
+2. Add handler function
+3. Register in `bin/hanif`
+4. Test it
+5. Submit PR
+
+## Code Style
+
+- Use `set -euo pipefail` in scripts
+- Quote variables: `"$var"`
+- Use utility functions: `info`, `success`, `error`
+- Keep it simple
+
+## Testing
+
+```bash
+bash tests/run-tests.sh
+```
+
+Add tests for new features in `tests/`.
+
+## Pull Requests
+
+- Clear description
+- Tests passing
+- One feature per PR
+
+That's it! Keep contributions simple and focused.
 
 ### Prerequisites
 

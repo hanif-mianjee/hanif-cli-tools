@@ -33,65 +33,35 @@ show_general_help() {
 │                 Version 1.0.0               │
 └─────────────────────────────────────────────┘
 
-DESCRIPTION
-  A personal productivity CLI tool with git helpers,
-  automation scripts, and daily workflow commands.
+A simple, extensible CLI for your daily workflows.
 
 USAGE
-  hanif <command> [subcommand] [options]
+  hanif <command> [options]
 
 COMMANDS
-  git <subcommand>
-    Powerful git workflow helpers
-    
-    Subcommands:
-      newfeature (nf)    Create feature branch
-      up                 Update main branch
-      upall              Update all branches
-      clean              Clean deleted branches
-      rebase (rb)        Rebase workflow
-      pull               Fetch all + pull
-      sync               Full sync workflow
-      status (st)        Git status
-      
-    Examples:
-      hanif git nf "add feature"
-      hanif git up
-      hanif git sync
+  git <subcommand>     Git workflow helpers
+  help [topic]         Show help
+  version              Show version
 
-  help [topic]
-    Show detailed help for a topic
-    
-    Examples:
-      hanif help
-      hanif help git
+GIT COMMANDS
+  sync                 Full git sync (update, rebase, clean)
+  nf "description"     New feature branch
+  up                   Update main branch
+  upall                Update all branches
+  clean                Clean deleted branches
+  rb <branch>          Rebase onto branch
 
-  version
-    Show version information
+EXAMPLES
+  hanif git sync
+  hanif git nf "add login"
+  hanif git up
 
-GETTING STARTED
-  1. Create a new feature:
-     $ hanif git nf "my awesome feature"
-  
-  2. Update your branches:
-     $ hanif git upall
-  
-  3. Full sync workflow:
-     $ hanif git sync
+ADDING COMMANDS
+  1. Create lib/commands/mycommand.sh
+  2. Register in bin/hanif
+  3. Use: hanif mycommand
 
-TIPS
-  - Most commands have short aliases (nf, rb, st)
-  - Unknown git commands pass through to git
-  - Use 'hanif help <command>' for details
-
-INSTALLATION
-  npm:       npm install -g hanif-cli
-  Homebrew:  brew install hanif-cli
-  Script:    curl -fsSL <url> | bash
-
-DOCUMENTATION
-  Repository: https://github.com/yourusername/hanif-cli-tools
-  Issues:     https://github.com/yourusername/hanif-cli-tools/issues
+See README.md for details.
 
 EOF
 }
