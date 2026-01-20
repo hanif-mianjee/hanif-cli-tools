@@ -1,8 +1,92 @@
-# Hanif CLI - Quick Start Guide
+# Hanif CLI - Quick Start
 
-## 🎉 Welcome to Hanif CLI!
+## 🚀 Get Started in 60 Seconds
 
-Your personal productivity tool has been scaffolded and is ready to use!
+### 1. Test It
+
+```bash
+cd /Users/hanifmianjee/code/personal/hanif-cli-tools
+./bin/hanif version
+./bin/hanif help
+```
+
+### 2. Install Locally
+
+```bash
+bash scripts/dev-install.sh
+```
+
+### 3. Use It
+
+```bash
+# Git commands
+hanif git sync              # Full git sync
+hanif git nf "my feature"   # New feature branch
+
+# Add your own commands easily!
+```
+
+## 📋 Basic Commands
+
+| Command | What it does |
+|---------|-------------|
+| `hanif git sync` | Update main, rebase, cleanup |
+| `hanif git nf "desc"` | Create feature branch |
+| `hanif git up` | Update main branch |
+| `hanif help` | Show help |
+
+## 🛠️ Add Your Commands
+
+1. Create `lib/commands/mycommand.sh`:
+   ```bash
+   mycommand_handler() {
+     info "Running..."
+     success "Done!"
+   }
+   ```
+
+2. Register in `bin/hanif`:
+   ```bash
+   mycommand)
+     source "${COMMANDS_DIR}/mycommand.sh"
+     mycommand_handler "$@"
+     ;;
+   ```
+
+3. Use: `hanif mycommand`
+
+## 📁 Project Files
+
+```
+hanif-cli-tools/
+├── bin/hanif              # Main CLI
+├── lib/commands/          # Add commands here
+├── lib/utils/common.sh    # Helpers (info, success, error)
+├── tests/                 # Tests
+└── scripts/               # Build scripts
+```
+
+## 🧪 Testing
+
+```bash
+bash tests/run-tests.sh
+```
+
+## 📦 Publishing
+
+When ready to share:
+
+```bash
+# Update version in package.json, bin/hanif
+# Then:
+npm publish
+```
+
+## 🎯 That's It!
+
+Simple, extensible, yours to customize.
+
+For more details, see [README.md](README.md)
 
 ## 📁 Project Structure
 

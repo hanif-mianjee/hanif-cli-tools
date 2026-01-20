@@ -98,25 +98,24 @@ Git Commands:
 
 Usage: hanif git <subcommand> [options]
 
-Subcommands:
-  newfeature, nf <desc>    Create a new feature branch
-  up, update               Update main/master branch
-  upall, updateall         Update all local branches
-  clean                    Delete branches removed from remote
-  rebase, rb <branch>      Rebase current branch onto another
-  pull                     Fetch all and pull
-  status, st               Show git status
+Common Commands:
   sync                     Full sync (update, rebase, clean)
-  help                     Show detailed help
+  nf, newfeature <desc>    Create feature branch
+  up, update               Update main branch
+  upall, updateall         Update all branches
+  clean                    Delete branches removed from remote
+  rb, rebase <branch>      Rebase onto branch
+  pull                     Fetch all + pull
+  st, status               Git status
 
 Examples:
-  hanif git newfeature "add user auth"
-  hanif git nf "OM-755: fix login bug"
-  hanif git up
-  hanif git rebase main
   hanif git sync
+  hanif git nf "add feature"
+  hanif git rb main
 
-For more details: hanif help git
+Tip: Unknown commands pass through to git
+     hanif git commit -m "msg" → git commit -m "msg"
+
 EOF
 }
 
@@ -127,116 +126,52 @@ show_git_help() {
 │           Git Helper Commands               │
 └─────────────────────────────────────────────┘
 
+SYNC
+  Full repository sync - perfect for starting work
+  
+  hanif git sync
+  
+  Does: Update main → Rebase current → Clean old branches
+
 NEWFEATURE (nf)
-  Create a new feature branch with smart naming
+  Create feature branch with smart naming
   
-  Usage:
-    hanif git newfeature "description"
-    hanif git nf "TICKET-123: description"
+  hanif git nf "add login"
+    → feature/add_login
   
-  Examples:
-    hanif git nf "add user authentication"
-      → creates: feature/add_user_authentication
-    
-    hanif git nf "OM-755: fix login bug"
-      → creates: feature/om-755_fix_login_bug
-  
-  Features:
-    - Extracts ticket numbers (JIRA-123, OM-755, etc.)
-    - Sanitizes branch names
-    - Enforces 60 char limit
-    - Converts to lowercase
+  hanif git nf "JIRA-123: fix bug"
+    → feature/jira-123_fix_bug
 
-UP (update)
-  Update main/master branch with latest changes
+UPDATE (up)
+  Update main/master branch
   
-  Usage:
-    hanif git up
-  
-  What it does:
-    - Checks out main/master
-    - Fetches from all remotes
-    - Pulls latest changes
+  hanif git up
 
-UPALL (updateall)
-  Update all local branches with remote changes
+UPDATE ALL (upall)
+  Update all local branches (stashes, updates, restores)
   
-  Usage:
-    hanif git upall
-  
-  What it does:
-    - Stashes local changes
-    - Fetches all remotes (single fetch)
-    - Fast-forwards all branches
-    - Restores to original branch
-    - Restores stash
+  hanif git upall
 
 CLEAN
   Delete local branches removed from remote
+  Protects: main, master, current branch
   
-  Usage:
-    hanif git clean
-  
-  What it does:
-    - Protects main, master, and current branch
-    - Deletes branches gone from origin
-    - Keeps local-only branches
-  
-  Safety:
-    - Never deletes protected branches
-    - Only deletes if remote tracking is gone
+  hanif git clean
 
 REBASE (rb)
-  Rebase current branch onto another branch
+  Rebase current branch (updates base, stashes, rebases)
   
-  Usage:
-    hanif git rebase <base-branch>
-    hanif git rb main
-  
-  What it does:
-    - Updates base branch first
-    - Stashes local changes
-    - Rebases current branch
-    - Restores stash
-  
-  Example:
-    hanif git rb main
+  hanif git rb main
 
 PULL
-  Fetch from all remotes and pull
+  Fetch all remotes and pull
   
-  Usage:
-    hanif git pull
-  
-  What it does:
-    git fetch --all && git pull
-
-SYNC
-  Full repository sync workflow
-  
-  Usage:
-    hanif git sync
-  
-  What it does:
-    1. Updates main/master
-    2. Rebases current branch (if not on main)
-    3. Cleans deleted branches
-  
-  Perfect for: Starting work after being away
-
-STATUS (st)
-  Show git status
-  
-  Usage:
-    hanif git status
-    hanif git st
+  hanif git pull
 
 PASSTHROUGH
-  Any unrecognized command is passed to git
+  Unknown commands pass to git
   
-  Example:
-    hanif git commit -m "fix bug"
-      → executes: git commit -m "fix bug"
+  hanif git commit -m "msg" → git commit -m "msg"
 
 EOF
 }

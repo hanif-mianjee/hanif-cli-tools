@@ -1,8 +1,8 @@
 class HanifCli < Formula
-  desc "Personal productivity CLI tool with git helpers and workflow automation"
+  desc "Simple, extensible CLI for daily workflows"
   homepage "https://github.com/yourusername/hanif-cli-tools"
   url "https://github.com/yourusername/hanif-cli-tools/archive/v1.0.0.tar.gz"
-  sha256 "SHA256_CHECKSUM_HERE"  # Will be generated during release
+  sha256 "SHA256_CHECKSUM_HERE"
   license "MIT"
   version "1.0.0"
 

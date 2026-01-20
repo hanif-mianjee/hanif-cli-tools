@@ -154,18 +154,13 @@ print_next_steps() {
 
 Next steps:
 
-  1. Reload your shell configuration:
-     ${YELLOW}source ~/.zshrc${NC}  (for zsh)
-     ${YELLOW}source ~/.bashrc${NC} (for bash)
-     
-     Or start a new terminal session
+  1. Reload your shell:
+     ${YELLOW}source ~/.zshrc${NC}  (or ~/.bashrc)
 
-  2. Verify installation:
+  2. Try it:
      ${BLUE}hanif version${NC}
-
-  3. Get started:
      ${BLUE}hanif help${NC}
-     ${BLUE}hanif git nf "my awesome feature"${NC}
+     ${BLUE}hanif git sync${NC}
 
 Documentation: ${REPO_URL}
 

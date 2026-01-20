@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Hanif CLI - Personal productivity CLI tool
+# Hanif CLI - Personal productivity tool
 # Version: 1.0.0
 
 set -euo pipefail
@@ -67,22 +67,24 @@ main() {
 show_usage() {
   cat << 'EOF'
 ┌─────────────────────────────────────────────┐
-│         Hanif CLI - Personal Tools          │
+│              Hanif CLI v1.0.0               │
 └─────────────────────────────────────────────┘
+
+Simple, extensible CLI for daily workflows
 
 Usage: hanif <command> [options]
 
 Commands:
-  git <subcommand>    Git helper commands
-  help [command]      Show detailed help
-  version             Show version information
+  git <subcommand>    Git helpers (sync, nf, up, etc.)
+  help [command]      Show help
+  version             Show version
 
 Examples:
-  hanif git newfeature "add login"
-  hanif git up
+  hanif git sync
+  hanif git nf "add feature"
   hanif help git
 
-For more information: hanif help
+Add your own commands - see README.md
 EOF
 }
 
