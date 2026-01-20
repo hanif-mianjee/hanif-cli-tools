@@ -111,6 +111,8 @@ Common Commands:
 Examples:
   hanif git sync
   hanif git nf "add feature"
+  hanif git nf "JIRA-123: add feature"
+    → Creates: feature/jira-123_add_feature
   hanif git rb main
 
 Tip: Unknown commands pass through to git
@@ -135,12 +137,18 @@ SYNC
 
 NEWFEATURE (nf)
   Create feature branch with smart naming
+  Automatically extracts JIRA/ticket numbers
   
   hanif git nf "add login"
     → feature/add_login
   
   hanif git nf "JIRA-123: fix bug"
     → feature/jira-123_fix_bug
+  
+  hanif git nf "OM-456 implement feature"
+    → feature/om-456_implement_feature
+  
+  Supports: JIRA-123, ABC-456, OM-789, etc.
 
 UPDATE (up)
   Update main/master branch
