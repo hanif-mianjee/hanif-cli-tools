@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 # Hanif CLI Installation Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/yourusername/hanif-cli-tools/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash
 
 set -euo pipefail
 
 # Configuration
-REPO_URL="https://github.com/yourusername/hanif-cli-tools"
+REPO_URL="https://github.com/hanif-mianjee/hanif-cli-tools"
 INSTALL_DIR="${HOME}/.hanif-cli"
 BIN_DIR="${HOME}/.local/bin"
 VERSION="${HANIF_VERSION:-latest}"

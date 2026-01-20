@@ -2,7 +2,7 @@
 
 > Personal productivity CLI tool for daily workflows
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/hanif-cli-tools)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/hanif-mianjee/hanif-cli-tools)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A simple, extensible command-line tool for automating your daily tasks. Start with built-in git helpers and easily add your own commands.
@@ -32,13 +32,13 @@ brew install hanif-cli
 ### Direct Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/hanif-cli-tools/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash
 ```
 
 ### Manual Installation
 
 ```bash
-git clone https://github.com/yourusername/hanif-cli-tools.git
+git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 ./install.sh
 ```
@@ -232,7 +232,7 @@ bash tests/test-squash.sh
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/hanif-cli-tools.git
+git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 
 # Install locally for development

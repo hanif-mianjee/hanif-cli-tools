@@ -175,7 +175,7 @@ main() {
   # 15. Create GitHub release
   echo ""
   info "Next steps:"
-  echo "  1. Create GitHub release: https://github.com/yourusername/hanif-cli-tools/releases/new"
+  echo "  1. Create GitHub release: https://github.com/hanif-mianjee/hanif-cli-tools/releases/new"
   echo "  2. Update Homebrew formula with new sha256"
   echo "  3. Test installation:"
   echo "       npm install -g hanif-cli"

@@ -6,7 +6,7 @@ Thanks for your interest! This is a simple, personal CLI tool that's easy to ext
 
 ```bash
 # Fork and clone
-git clone https://github.com/yourusername/hanif-cli-tools.git
+git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 
 # Install locally
@@ -60,7 +60,7 @@ That's it! Keep contributions simple and focused.
 1. **Fork and Clone**
 
 ```bash
-git clone https://github.com/yourusername/hanif-cli-tools.git
+git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 ```
 
@@ -505,8 +505,8 @@ npm publish
 
 ## Getting Help
 
-- **Questions**: Open a [Discussion](https://github.com/yourusername/hanif-cli-tools/discussions)
-- **Bugs**: Open an [Issue](https://github.com/yourusername/hanif-cli-tools/issues)
+- **Questions**: Open a [Discussion](https://github.com/hanif-mianjee/hanif-cli-tools/discussions)
+- **Bugs**: Open an [Issue](https://github.com/hanif-mianjee/hanif-cli-tools/issues)
 - **Security**: Email security@example.com
 
 ## Recognition

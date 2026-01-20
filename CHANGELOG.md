@@ -21,4 +21,4 @@
 - Installation scripts (npm, Homebrew, direct)
 - Documentation
 
-[1.0.0]: https://github.com/yourusername/hanif-cli-tools/releases/tag/v1.0.0
+[1.0.0]: https://github.com/hanif-mianjee/hanif-cli-tools/releases/tag/v1.0.0

@@ -4,7 +4,7 @@
 
 ```bash
 # Clone and install
-git clone https://github.com/yourusername/hanif-cli-tools.git
+git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 bash scripts/dev-install.sh
 
@@ -212,7 +212,7 @@ apt-get install bash git nodejs shellcheck shfmt
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/hanif-cli-tools.git
+git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 
 # 2. Make scripts executable

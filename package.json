@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/hanif-cli-tools.git"
+    "url": "git+https://github.com/hanif-mianjee/hanif-cli-tools.git"
   },
   "keywords": [
     "cli",
