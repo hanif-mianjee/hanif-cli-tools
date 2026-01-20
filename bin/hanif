@@ -5,10 +5,9 @@
 
 set -euo pipefail
 
-# Determine the installation directory
-# This works for both direct installation and npm/homebrew
-if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlink to find the actual script location
+if [[ -L "$0" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0")")" && pwd)"
 else
   SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
