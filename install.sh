@@ -155,12 +155,12 @@ print_next_steps() {
 Next steps:
 
   1. Reload your shell:
-     ${YELLOW}source ~/.zshrc${NC}  (or ~/.bashrc)
+     $(echo -e "${YELLOW}source ~/.zshrc${NC}")  (or ~/.bashrc)
 
   2. Try it:
-     ${BLUE}hanif version${NC}
-     ${BLUE}hanif help${NC}
-     ${BLUE}hanif git sync${NC}
+     $(echo -e "${BLUE}hanif version${NC}")
+     $(echo -e "${BLUE}hanif help${NC}")
+     $(echo -e "${BLUE}hanif git sync${NC}")
 
 Documentation: ${REPO_URL}
 
