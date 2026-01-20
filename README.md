@@ -76,6 +76,13 @@ Common git workflows automated:
 hanif git nf "add login feature"
 # → Creates: feature/add_login_feature
 
+# Create feature branch with JIRA/ticket number
+hanif git nf "JIRA-123: add login feature"
+# → Creates: feature/jira-123_add_login_feature
+
+hanif git nf "OM-755: fix authentication bug"
+# → Creates: feature/om-755_fix_authentication_bug
+
 # Sync everything (update main, rebase, cleanup)
 hanif git sync
 
@@ -87,6 +94,12 @@ hanif git upall    # Update all branches
 hanif git clean    # Remove deleted branches
 hanif git rb main  # Rebase onto main
 ```
+
+**Smart branch naming:**
+- Automatically extracts ticket numbers (JIRA-123, OM-755, ABC-42, etc.)
+- Sanitizes branch names (removes special characters)
+- Converts to lowercase
+- Enforces 60 character limit
 
 **Git commands pass through:**
 ```bash
@@ -162,31 +175,7 @@ chmod +x bin/hanif
 npm run lint
 ```
 
-### Adding New Commands
-
-1. Create command file in `lib/commands/`:
-
-```bash
-# lib/commands/mycommand.sh
-mycommand_handler() {
-  echo "My command works!"
-}
-```
-
-2. Add to main dispatcher in `bin/hanif`:
-
-```bash
-mycommand)
-  source "${COMMANDS_DIR}/mycommand.sh"
-  mycommand_handler "$@"
-  ;;
-```
-
-3. Add help text in `lib/commands/help.sh`
-
-4. Add tests in `tests/test-mycommand.sh`
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+See "Adding Your Own Commands" section below for how to extend the CLI.
 
 ## Configuration
 
@@ -195,18 +184,18 @@ Hanif CLI works out of the box with no configuration needed. It respects your gi
 ### Environment Variables
 
 - `DEBUG=1` - Enable debug output
-- `HANIF_VERSION=<version>` - Specify version for installation
 
 ## Examples
 
-### Daily Workflow
+### Daily Git Workflow
 
 ```bash
 # Start of day - sync everything
 hanif git sync
 
-# Create new feature
+# Create feature with ticket number
 hanif git nf "OM-842: add export feature"
+# → Creates: feature/om-842_add_export_feature
 
 # Work on feature...
 git add .
@@ -217,7 +206,18 @@ hanif git rb main
 git push -u origin HEAD
 ```
 
-### Managing Multiple Features
+### Ticket Number Examples
+
+```bash
+hanif git nf "JIRA-456: update API endpoints"
+# → feature/jira-456_update_api_endpoints
+
+hanif git nf "ABC-789 refactor database layer"
+# → feature/abc-789_refactor_database_layer
+
+hanif git nf "just a simple feature"
+# → feature/just_a_simple_feature
+```
 Adding Your Own Commands
 
 It's simple! Just 3 steps:
@@ -240,7 +240,92 @@ It's simple! Just 3 steps:
    ```
 
 3. **Use it**: `hanif mycommand`
-Contributing
+
+## Building & Publishing
+
+### Local Development
+
+```bash
+# Install for development (creates symlink)
+bash scripts/dev-install.sh
+
+# Test your changes
+hanif version
+hanif git nf "test"
+
+# Run tests
+bash tests/run-tests.sh
+```
+
+### Building
+
+```bash
+# Validate project
+bash scripts/build.sh
+
+# This checks:
+# - All required files exist
+# - Scripts are executable
+# - Tests pass
+```
+
+### Publishing
+
+#### 1. Update Version
+
+Update version in these files:
+- `package.json` - "version" field
+- `bin/hanif` - VERSION variable
+- `hanif-cli.rb` - version field
+
+#### 2. Update Changelog
+
+Add your changes to `CHANGELOG.md`
+
+#### 3. Publish to npm
+
+```bash
+# Login (first time only)
+npm login
+
+# Publish
+npm publish
+```
+
+#### 4. Publish to Homebrew
+
+```bash
+# Create GitHub release and tag
+git tag -a v1.0.1 -m "Release 1.0.1"
+git push origin v1.0.1
+
+# Generate SHA256 for Homebrew formula
+curl -L https://github.com/user/repo/archive/v1.0.1.tar.gz -o temp.tar.gz
+shasum -a 256 temp.tar.gz
+
+# Update hanif-cli.rb with new version and SHA256
+# Push to your homebrew tap repository
+```
+
+#### 5. Direct Installation
+
+Users can install directly via:
+```bash
+curl -fsSL https://raw.githubusercontent.com/yourusername/hanif-cli-tools/main/install.sh | bash
+```
+
+### Automated Publishing
+
+The project includes GitHub Actions workflows:
+- `.github/workflows/ci.yml` - Runs tests on push
+- `.github/workflows/release.yml` - Auto-publishes on tag push
+
+To auto-publish:
+1. Set `NPM_TOKEN` secret in GitHub repo settings
+2. Push a version tag: `git push origin v1.0.1`
+3. GitHub Actions will test and publish automatically
+
+## Contributing
 
 Contributions welcome! Add your own commands and share them.
 

@@ -45,7 +45,7 @@ COMMANDS
 
 GIT COMMANDS
   sync                 Full git sync (update, rebase, clean)
-  nf "description"     New feature branch
+  nf "description"     New feature branch (extracts JIRA tickets)
   up                   Update main branch
   upall                Update all branches
   clean                Clean deleted branches
@@ -54,6 +54,8 @@ GIT COMMANDS
 EXAMPLES
   hanif git sync
   hanif git nf "add login"
+  hanif git nf "JIRA-123: add feature"
+    → Creates: feature/jira-123_add_feature
   hanif git up
 
 ADDING COMMANDS
