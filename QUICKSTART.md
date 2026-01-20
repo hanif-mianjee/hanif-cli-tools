@@ -22,6 +22,7 @@ bash scripts/dev-install.sh
 # Git commands
 hanif git sync              # Full git sync
 hanif git nf "my feature"   # New feature branch
+hanif squash 5              # Squash last 5 commits
 
 # Add your own commands easily!
 ```
@@ -32,6 +33,7 @@ hanif git nf "my feature"   # New feature branch
 |---------|-------------|
 | `hanif git sync` | Update main, rebase, cleanup |
 | `hanif git nf "desc"` | Create feature branch |
+| `hanif squash <count>` | Interactive commit squashing |
 | `hanif git up` | Update main branch |
 | `hanif help` | Show help |
 

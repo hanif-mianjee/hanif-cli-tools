@@ -44,6 +44,12 @@ main() {
       git_command "$@"
       ;;
     
+    squash)
+      # shellcheck source=../lib/commands/squash.sh
+      source "${COMMANDS_DIR}/squash.sh"
+      squash_command "$@"
+      ;;
+    
     help|--help|-h)
       # shellcheck source=../lib/commands/help.sh
       source "${COMMANDS_DIR}/help.sh"
@@ -76,12 +82,14 @@ Usage: hanif <command> [options]
 
 Commands:
   git <subcommand>    Git helpers (sync, nf, up, etc.)
+  squash <count>      Interactive commit squashing
   help [command]      Show help
   version             Show version
 
 Examples:
   hanif git sync
   hanif git nf "add feature"
+  hanif squash 5
   hanif help git
 
 Add your own commands - see README.md

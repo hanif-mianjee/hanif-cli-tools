@@ -63,6 +63,9 @@ hanif git sync
 
 # Clean deleted branches
 hanif git clean
+
+# Interactive commit squashing
+hanif squash 5
 ```
 
 ## Commands
@@ -105,6 +108,75 @@ hanif git rb main  # Rebase onto main
 ```bash
 hanif git commit -m "message"  # → runs: git commit -m "message"
 hanif git status               # → runs: git status
+```
+
+### Squash Commands
+
+Interactive commit squashing with smart message formatting:
+
+```bash
+# Squash last 5 commits
+hanif squash 5
+# → Shows commits, select which to squash into
+# → Optional: provide custom message
+# → Preserves all commits with hashes
+
+# Squash last 10 commits
+hanif squash 10
+
+# Get help
+hanif squash --help
+```
+
+**Features:**
+- 🎯 **Interactive selection** - Choose which commit to squash into
+- 📝 **Custom messages** - Optional custom message or use selected commit's message
+- 🔄 **Preserves history** - All commits listed with hashes in final message
+- 🌳 **Root support** - Can squash all commits including first one
+- 💬 **Multi-line support** - Preserves formatting when re-squashing
+
+**Example workflow:**
+```bash
+# You have 5 commits on feature branch
+hanif squash 5
+
+# Output:
+# 📜 Select a commit to squash everything into:
+# 1) a524b8f Fifth commit
+# 2) ef3798f Fourth commit
+# 3) 1a6c6d8 Third commit
+# 4) facfca7 Second commit
+# 5) cbfcdf1 First commit
+# Enter number [1-5]: 3
+
+# 💬 Enter custom message for squashed commit
+#    (Press Enter to use: "Third commit")
+# Message: OM-1200 Major refactor
+
+# Result:
+# OM-1200 Major refactor
+# * 1a6c6d8 Third commit
+# * ef3798f Fourth commit
+# * a524b8f Fifth commit
+```
+
+**Common use cases:**
+```bash
+# Clean up feature branch before PR
+hanif squash 8
+# Select meaningful commit, add descriptive message
+
+# Squash WIP commits, keep feature commit message
+hanif squash 5
+# Select your main commit, press Enter to keep its message
+
+# Re-squash after adding more commits
+hanif squash 3
+# Works seamlessly with already-squashed commits
+
+# Squash from root (all commits)
+hanif squash 10
+# Select last commit (option 10) to squash everything
 ```
 
 ### Help
@@ -151,8 +223,9 @@ npm test
 # Run tests manually
 bash tests/run-tests.sh
 
-# Run specific test
+# Run specific test suite
 bash tests/test-git.sh
+bash tests/test-squash.sh
 ```
 
 ### Local Development
@@ -200,6 +273,14 @@ hanif git nf "OM-842: add export feature"
 # Work on feature...
 git add .
 git commit -m "Implement export"
+git add .
+git commit -m "Add tests"
+git add .
+git commit -m "Fix edge case"
+
+# Squash commits before PR
+hanif squash 3
+# Select commit #1, add: "feat: add export feature with tests"
 
 # Update and rebase before pushing
 hanif git rb main
@@ -218,6 +299,36 @@ hanif git nf "ABC-789 refactor database layer"
 hanif git nf "just a simple feature"
 # → feature/just_a_simple_feature
 ```
+
+### Squash Examples
+
+```bash
+# Cleaning up feature branch
+hanif squash 8
+# 📜 Select a commit to squash everything into:
+# 1) a524b8f Eighth commit (most recent)
+# 2) ef3798f Seventh commit
+# ...
+# 8) cbfcdf1 First commit
+# Enter number [1-8]: 1
+# Message: feat: implement user authentication
+#
+# Result: One clean commit with all changes
+
+# Preparing for PR (keeping existing message)
+hanif squash 5
+# Enter number [1-5]: 2
+# Message: [press Enter]
+#
+# Result: Uses commit #2's message as main message
+
+# Re-squashing after adding commits
+# (You previously squashed, then added more work)
+hanif squash 3
+# Select the previously squashed commit
+# All formatting preserved, new commits appended
+```
+
 Adding Your Own Commands
 
 It's simple! Just 3 steps:
