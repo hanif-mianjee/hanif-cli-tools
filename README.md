@@ -8,14 +8,14 @@
 ## Installation
 
 ```bash
-# npm (recommended)
-npm install -g hanif-cli
-
-# Homebrew
-brew tap hanif-mianjee/hanif-cli && brew install hanif-cli
-
-# Direct
+# Direct (recommended)
 curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash
+
+# npm (not available)
+# npm install -g hanif-cli
+
+# Homebrew (not available)
+# brew tap hanif-mianjee/hanif-cli && brew install hanif-cli
 ```
 
 ## Git Commands

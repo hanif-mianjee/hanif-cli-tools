@@ -34,7 +34,7 @@ main() {
   cd "$PROJECT_ROOT"
   
   echo "┌─────────────────────────────────────────────┐"
-  echo "│       Hanif CLI Publishing Script          │"
+  echo "│       Hanif CLI Publishing Script           │"
   echo "└─────────────────────────────────────────────┘"
   echo ""
   

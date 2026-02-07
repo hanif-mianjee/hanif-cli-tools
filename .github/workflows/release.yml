@@ -31,10 +31,10 @@ jobs:
           chmod +x bin/hanif tests/*.sh
           bash tests/run-tests.sh
       
-      - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # - name: Publish to npm
+      #   run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Extract changelog
         id: changelog
