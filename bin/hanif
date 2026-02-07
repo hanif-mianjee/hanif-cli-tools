@@ -22,7 +22,7 @@ FUNCTIONS_DIR="${LIB_DIR}/functions"
 source "${UTILS_DIR}/common.sh"
 
 # CLI Version
-VERSION="0.0.0"
+VERSION="0.1.0"
 
 # Main command dispatcher
 main() {
