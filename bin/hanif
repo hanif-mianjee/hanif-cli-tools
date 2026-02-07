@@ -37,12 +37,50 @@ main() {
   shift
 
   case "$command" in
+    # Git shortcut commands (preferred)
+    # These are the primary way to use git commands.
+    # TODO(deprecation): Remove `hanif git <subcommand>` form in v2.0.0
+    sync)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command sync "$@"
+      ;;
+    nf|newfeature)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command nf "$@"
+      ;;
+    up|update)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command up "$@"
+      ;;
+    upall|updateall)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command upall "$@"
+      ;;
+    clean)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command clean "$@"
+      ;;
+    rb|rebase)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command rb "$@"
+      ;;
+    pull)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command pull "$@"
+      ;;
+    st|status)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command st "$@"
+      ;;
+
+    # Backward-compatible `hanif git <subcommand>` form
+    # TODO(deprecation): Remove in v2.0.0 — use `hanif <subcommand>` directly
     git)
       # shellcheck source=../lib/commands/git.sh
       source "${COMMANDS_DIR}/git.sh"
       git_command "$@"
       ;;
-    
+
     squash)
       # shellcheck source=../lib/commands/squash.sh
       source "${COMMANDS_DIR}/squash.sh"
@@ -60,11 +98,11 @@ main() {
       source "${COMMANDS_DIR}/help.sh"
       show_help "$@"
       ;;
-    
+
     version|--version|-v)
-      echo "hanif CLI v${VERSION}"
+      echo "Hanif CLI v${VERSION}"
       ;;
-    
+
     *)
       echo "❌ Unknown command: $command"
       echo ""
@@ -85,22 +123,29 @@ Simple, extensible CLI for daily workflows
 
 Usage: hanif <command> [options]
 
-Commands:
-  git <subcommand>    Git helpers (sync, nf, up, etc.)
+Git Commands:
+  sync                Full sync (update, rebase, clean)
+  nf "description"    Create feature branch
+  up                  Update main branch
+  upall               Update all branches
+  clean               Delete branches removed from remote
+  rb <branch>         Rebase onto branch
+  pull                Fetch all + pull
+  st                  Git status
   squash <count>      Interactive commit squashing
+
+Other Commands:
   svg <subcommand>    SVG to PNG conversion
   help [command]      Show help
   version             Show version
 
 Examples:
-  hanif git sync
-  hanif git nf "add feature"
+  hanif sync
+  hanif nf "add feature"
+  hanif up
   hanif squash 5
   hanif svg chrome icon.svg
-  hanif svg convert logo.svg 64,128,256
   hanif help git
-
-Add your own commands - see README.md
 EOF
 }
 

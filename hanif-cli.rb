@@ -22,7 +22,7 @@ class HanifCli < Formula
 
   test do
     # Test that the binary runs
-    assert_match "hanif CLI v", shell_output("#{bin}/hanif version")
+    assert_match "Hanif CLI v", shell_output("#{bin}/hanif version")
     
     # Test help command
     assert_match "Usage: hanif", shell_output("#{bin}/hanif help")

@@ -19,7 +19,7 @@ git_command() {
   case "$subcommand" in
     newfeature|nf)
       if [[ $# -eq 0 ]]; then
-        error "Usage: hanif git newfeature \"description\""
+        error "Usage: hanif nf \"description\""
         exit 1
       fi
       newfeature "$@"
@@ -96,9 +96,9 @@ show_git_usage() {
   cat << 'EOF'
 Git Commands:
 
-Usage: hanif git <subcommand> [options]
+Usage: hanif <command> [options]
 
-Common Commands:
+Commands:
   sync                     Full sync (update, rebase, clean)
   nf, newfeature <desc>    Create feature branch
   up, update               Update main branch
@@ -109,14 +109,14 @@ Common Commands:
   st, status               Git status
 
 Examples:
-  hanif git sync
-  hanif git nf "add feature"
-  hanif git nf "JIRA-123: add feature"
+  hanif sync
+  hanif nf "add feature"
+  hanif nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
-  hanif git rb main
+  hanif rb main
 
-Tip: Unknown commands pass through to git
-     hanif git commit -m "msg" → git commit -m "msg"
+Tip: `hanif git <command>` also works (legacy syntax)
+     Unknown git commands pass through: hanif git commit -m "msg"
 
 EOF
 }
@@ -130,56 +130,55 @@ show_git_help() {
 
 SYNC
   Full repository sync - perfect for starting work
-  
-  hanif git sync
-  
+
+  hanif sync
+
   Does: Update main → Rebase current → Clean old branches
 
 NEWFEATURE (nf)
   Create feature branch with smart naming
   Automatically extracts JIRA/ticket numbers
-  
-  hanif git nf "add login"
+
+  hanif nf "add login"
     → feature/add_login
-  
-  hanif git nf "JIRA-123: fix bug"
+
+  hanif nf "JIRA-123: fix bug"
     → feature/jira-123_fix_bug
-  
-  hanif git nf "OM-456 implement feature"
+
+  hanif nf "OM-456 implement feature"
     → feature/om-456_implement_feature
-  
+
   Supports: JIRA-123, ABC-456, OM-789, etc.
 
 UPDATE (up)
   Update main/master branch
-  
-  hanif git up
+
+  hanif up
 
 UPDATE ALL (upall)
   Update all local branches (stashes, updates, restores)
-  
-  hanif git upall
+
+  hanif upall
 
 CLEAN
   Delete local branches removed from remote
   Protects: main, master, current branch
-  
-  hanif git clean
+
+  hanif clean
 
 REBASE (rb)
   Rebase current branch (updates base, stashes, rebases)
-  
-  hanif git rb main
+
+  hanif rb main
 
 PULL
   Fetch all remotes and pull
-  
-  hanif git pull
 
-PASSTHROUGH
-  Unknown commands pass to git
-  
-  hanif git commit -m "msg" → git commit -m "msg"
+  hanif pull
+
+LEGACY SYNTAX
+  `hanif git <command>` still works for backward compatibility.
+  Unknown commands pass to git: hanif git commit -m "msg"
 
 EOF
 }

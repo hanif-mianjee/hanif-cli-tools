@@ -95,7 +95,7 @@ test_cli_version() {
   local output
   output=$("$PROJECT_ROOT/bin/hanif" version 2>&1)
   
-  assert_contains "Shows version" "$output" "hanif CLI v"
+  assert_contains "Shows version" "$output" "Hanif CLI v"
 }
 
 # Test: CLI shows help
@@ -106,12 +106,20 @@ test_cli_help() {
   assert_contains "Shows help" "$output" "USAGE"
 }
 
-# Test: Git command help
+# Test: Git command help (via legacy syntax)
 test_git_help() {
   local output
   output=$("$PROJECT_ROOT/bin/hanif" git help 2>&1)
-  
+
   assert_contains "Shows git help" "$output" "Git Helper Commands"
+}
+
+# Test: Shortcut commands route correctly
+test_shortcut_help() {
+  local output
+  output=$("$PROJECT_ROOT/bin/hanif" help 2>&1)
+
+  assert_contains "Help shows shortcut syntax" "$output" "hanif <command>"
 }
 
 # Test: Invalid command
@@ -133,6 +141,7 @@ main() {
   test_cli_version
   test_cli_help
   test_git_help
+  test_shortcut_help
   test_invalid_command
   
   print_summary
