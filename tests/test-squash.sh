@@ -69,12 +69,18 @@ test_squash_help() {
   assert_contains "Help output contains examples" "$output" "EXAMPLES"
 }
 
-# Test: Squash requires count argument
-test_squash_requires_count() {
+# Test: Squash defaults to 20 when no count given
+test_squash_defaults_to_20() {
+  setup
+
+  # With no count argument, squash should default to showing commits (not show usage error)
+  # We can't fully test interactive mode, but verify it doesn't show a usage error
   local output
-  output=$("$PROJECT_ROOT/bin/hanif" squash 2>&1 || true)
-  
-  assert_contains "Error message shown" "$output" "Usage:"
+  output=$("$PROJECT_ROOT/bin/hanif" squash 2>&1 </dev/null || true)
+
+  assert_contains "Should show commit selection prompt" "$output" "Select a commit"
+
+  teardown
 }
 
 # Test: Squash rejects invalid count
@@ -142,7 +148,7 @@ test_main_usage_includes_squash() {
   local output
   output=$("$PROJECT_ROOT/bin/hanif" 2>&1)
   
-  assert_contains "Main usage includes squash" "$output" "squash <count>"
+  assert_contains "Main usage includes squash" "$output" "squash [count]"
   assert_contains "Main usage shows example" "$output" "hanif squash 5"
 }
 
@@ -153,7 +159,7 @@ echo ""
 run_test test_squash_command_exists
 run_test test_squash_functions_exist
 run_test test_squash_help
-run_test test_squash_requires_count
+run_test test_squash_defaults_to_20
 run_test test_squash_rejects_invalid_count
 run_test test_squash_shows_commits
 run_test test_squash_requires_git_repo

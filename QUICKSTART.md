@@ -22,7 +22,7 @@ hanif help
 | `hanif upall` | Update all branches |
 | `hanif clean` | Delete branches removed from remote |
 | `hanif rb main` | Rebase onto branch |
-| `hanif squash <count>` | Interactive commit squashing |
+| `hanif squash [count]` | Interactive commit squashing (default: 20) |
 | `hanif svg convert ...` | SVG to PNG conversion |
 | `hanif help` | Show help |
 

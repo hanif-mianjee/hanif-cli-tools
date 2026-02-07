@@ -14,12 +14,7 @@ squash_command() {
     exit 1
   fi
 
-  if [[ $# -eq 0 ]]; then
-    show_squash_usage
-    exit 1
-  fi
-
-  local subcommand="$1"
+  local subcommand="${1:-20}"
   
   case "$subcommand" in
     help|--help|-h)
@@ -38,14 +33,18 @@ show_squash_usage() {
   cat << 'EOF'
 Squash Command:
 
-Usage: hanif squash <count>
+Usage: hanif squash [count]
 
 Interactively squash the last N commits with smart message formatting.
+Default count: 20
 
 Examples:
+  hanif squash
+    → Shows last 20 commits (default)
+
   hanif squash 5
     → Shows last 5 commits, select which to squash into
-  
+
   hanif squash 10
     → Shows last 10 commits
 
@@ -68,7 +67,7 @@ DESCRIPTION
   final message with their hashes.
 
 USAGE
-  hanif squash <count>
+  hanif squash [count]    (default: 20)
 
 FEATURES
   🎯 Interactive commit selection
@@ -122,7 +121,8 @@ EXAMPLES
   # Works seamlessly with already-squashed commits
 
 TIPS
-  • Select last commit (highest number) to squash from root
+  • Root commit is auto-detected (squash from root when selecting the initial commit)
+  • Default count is 20 if not specified
   • Press Enter to keep selected commit message
   • Custom messages become the first line
   • All commits preserved with hashes in message body

@@ -57,7 +57,7 @@ GIT COMMANDS
   rb <branch>          Rebase onto branch
   pull                 Fetch all + pull
   st                   Git status
-  squash <count>       Interactive commit squashing
+  squash [count]       Interactive commit squashing (default: 20)
 
 OTHER COMMANDS
   svg <subcommand>     SVG to PNG conversion

@@ -42,8 +42,9 @@ Smart branch naming with `nf`:
 Interactive commit squashing with smart message formatting:
 
 ```bash
-hanif squash 5
-# Shows last 5 commits, select which to squash into
+hanif squash          # Shows last 20 commits (default)
+hanif squash 5        # Shows last 5 commits
+# Select which commit to squash into
 # Optionally provide a custom message
 # All commits preserved with hashes in final message
 ```

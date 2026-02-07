@@ -52,10 +52,12 @@ EOF
       # Trim whitespace from custom message
       custom_msg=$(echo "$custom_msg" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
       
-      # Check if the user wants to squash all commits from the root
-      if [ "$choice" -eq "$i" ]; then
+      # Check if the selected commit is the root commit (has no parent).
+      # Only use --root rebase when the commit genuinely has no parent,
+      # not just because it's the last item in the displayed list.
+      is_root_commit=$(git cat-file -p "$base_hash" | grep -c '^parent ' || true)
+      if [ "$is_root_commit" -eq 0 ]; then
         info "Squashing all commits from the root..."
-        # For root commit, get all commits from the beginning
         if [ -n "$custom_msg" ]; then
           # Custom message: all commits get * hash format
           commit_message="$custom_msg"$'\n'"$(git log --format='%h %B' --reverse --all | awk '/^[0-9a-f]+ / {sub(/^/, "* "); print; next} NF==0 {next} {print}')"
