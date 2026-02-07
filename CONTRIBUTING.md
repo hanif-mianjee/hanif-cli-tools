@@ -83,10 +83,10 @@ scripts/               # Build/install scripts
 
 ## Release Process
 
-1. Update version in `package.json`, `bin/hanif`, `hanif-cli.rb`
-2. Update `CHANGELOG.md`
-3. Tag and push: `git tag -a v1.0.1 -m "Release 1.0.1" && git push origin v1.0.1`
-4. GitHub Actions handles npm publish automatically
+```bash
+# Automated: bumps version everywhere, runs tests, tags, and publishes
+bash scripts/publish.sh
+```
 
 ## Getting Help
 

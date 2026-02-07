@@ -37,10 +37,10 @@ show_help() {
 
 # Show general help information
 show_general_help() {
-  cat << 'EOF'
+  cat << EOF
 ┌─────────────────────────────────────────────┐
 │         Hanif CLI - Personal Tools          │
-│                 Version 0.0.0               │
+│                 Version ${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
 └─────────────────────────────────────────────┘
 
 A simple, extensible CLI for your daily workflows.
@@ -74,7 +74,7 @@ EXAMPLES
   hanif help git
 
 LEGACY
-  `hanif git <subcommand>` still works for backward compatibility.
+  'hanif git <subcommand>' still works for backward compatibility.
 
 EOF
 }

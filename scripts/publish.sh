@@ -110,19 +110,24 @@ main() {
   
   # 8. Update version in other files
   if [[ "$new_version" != "$current_version" ]]; then
-    warning "Remember to update version in:"
-    echo "  - bin/hanif (VERSION variable)"
-    echo "  - hanif-cli.rb (version and url)"
-    echo "  - CHANGELOG.md"
-    echo ""
-    
-    if confirm "Open these files now?"; then
-      ${EDITOR:-vim} bin/hanif hanif-cli.rb CHANGELOG.md
-    fi
-    
-    if ! confirm "Version updated in all files?"; then
-      error "Aborting - please update version references"
-      exit 1
+    info "Updating version in all files..."
+
+    # bin/hanif - VERSION variable
+    sed -i '' "s/^VERSION=\".*\"/VERSION=\"${new_version}\"/" bin/hanif
+    success "Updated bin/hanif"
+
+    # hanif-cli.rb - version and url
+    sed -i '' "s|archive/v.*\.tar\.gz|archive/v${new_version}.tar.gz|" hanif-cli.rb
+    sed -i '' "s/^  version \".*\"/  version \"${new_version}\"/" hanif-cli.rb
+    success "Updated hanif-cli.rb"
+
+    # README.md - version badge
+    sed -i '' "s/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-${new_version}-blue/" README.md
+    success "Updated README.md badge"
+
+    # CHANGELOG.md - open for manual editing
+    if confirm "Open CHANGELOG.md to add release notes?"; then
+      ${EDITOR:-vim} CHANGELOG.md
     fi
   fi
   
@@ -144,7 +149,7 @@ main() {
   
   # 11. Commit version bump
   if [[ "$new_version" != "$current_version" ]]; then
-    git add package.json bin/hanif hanif-cli.rb CHANGELOG.md
+    git add package.json bin/hanif hanif-cli.rb CHANGELOG.md README.md
     git commit -m "chore: release version $new_version"
   fi
   

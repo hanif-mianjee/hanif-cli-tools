@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # Hanif CLI - Personal productivity tool
-# Version: 0.0.0
 
 set -euo pipefail
 
@@ -114,9 +113,9 @@ main() {
 
 # Show basic usage
 show_usage() {
-  cat << 'EOF'
+  cat << EOF
 ┌─────────────────────────────────────────────┐
-│              Hanif CLI v0.0.0               │
+│              Hanif CLI v${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
 └─────────────────────────────────────────────┘
 
 Simple, extensible CLI for daily workflows

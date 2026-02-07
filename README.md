@@ -89,12 +89,8 @@ scripts/               # Build/install/publish scripts
 ### Publishing
 
 ```bash
-# Update version in package.json, bin/hanif, hanif-cli.rb
-# Update CHANGELOG.md, then:
-npm publish
-
-# Or push a tag for automated release:
-git tag -a v1.0.1 -m "Release 1.0.1" && git push origin v1.0.1
+# Automated: bumps version everywhere, tags, publishes
+bash scripts/publish.sh
 ```
 
 ## Legacy Syntax
