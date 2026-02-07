@@ -31,14 +31,14 @@ assert_success() {
   shift
   local command=("$@")
   
-  ((TESTS_RUN++))
-  
+  ((TESTS_RUN++)) || true || true
+
   if "${command[@]}" >/dev/null 2>&1; then
-    ((TESTS_PASSED++))
+    ((TESTS_PASSED++)) || true || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   else
-    ((TESTS_FAILED++))
+    ((TESTS_FAILED++)) || true || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}Command failed: ${command[*]}${NC}"
     return 1
@@ -51,15 +51,15 @@ assert_failure() {
   shift
   local command=("$@")
   
-  ((TESTS_RUN++))
+  ((TESTS_RUN++)) || true
   
   if "${command[@]}" >/dev/null 2>&1; then
-    ((TESTS_FAILED++))
+    ((TESTS_FAILED++)) || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}Expected failure but command succeeded${NC}"
     return 1
   else
-    ((TESTS_PASSED++))
+    ((TESTS_PASSED++)) || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   fi
@@ -71,14 +71,14 @@ assert_equals() {
   local expected="$2"
   local actual="$3"
   
-  ((TESTS_RUN++))
+  ((TESTS_RUN++)) || true
   
   if [[ "$expected" == "$actual" ]]; then
-    ((TESTS_PASSED++))
+    ((TESTS_PASSED++)) || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   else
-    ((TESTS_FAILED++))
+    ((TESTS_FAILED++)) || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}Expected: '$expected'${NC}"
     echo -e "  ${RED}Actual:   '$actual'${NC}"
@@ -92,14 +92,14 @@ assert_contains() {
   local haystack="$2"
   local needle="$3"
   
-  ((TESTS_RUN++))
+  ((TESTS_RUN++)) || true
   
   if [[ "$haystack" == *"$needle"* ]]; then
-    ((TESTS_PASSED++))
+    ((TESTS_PASSED++)) || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   else
-    ((TESTS_FAILED++))
+    ((TESTS_FAILED++)) || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}Expected to contain: '$needle'${NC}"
     echo -e "  ${RED}Actual: '$haystack'${NC}"
@@ -112,14 +112,14 @@ assert_file_exists() {
   local description="$1"
   local file="$2"
   
-  ((TESTS_RUN++))
+  ((TESTS_RUN++)) || true
   
   if [[ -f "$file" ]]; then
-    ((TESTS_PASSED++))
+    ((TESTS_PASSED++)) || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   else
-    ((TESTS_FAILED++))
+    ((TESTS_FAILED++)) || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}File does not exist: $file${NC}"
     return 1
@@ -131,14 +131,14 @@ assert_dir_exists() {
   local description="$1"
   local dir="$2"
   
-  ((TESTS_RUN++))
+  ((TESTS_RUN++)) || true
   
   if [[ -d "$dir" ]]; then
-    ((TESTS_PASSED++))
+    ((TESTS_PASSED++)) || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   else
-    ((TESTS_FAILED++))
+    ((TESTS_FAILED++)) || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}Directory does not exist: $dir${NC}"
     return 1
