@@ -21,7 +21,12 @@ show_help() {
       source "${COMMANDS_DIR}/squash.sh"
       show_squash_help
       ;;
-    
+
+    svg)
+      source "${COMMANDS_DIR}/svg.sh"
+      show_svg_help
+      ;;
+
     *)
       echo "❌ No help available for: $topic"
       echo ""
@@ -46,6 +51,7 @@ USAGE
 COMMANDS
   git <subcommand>     Git workflow helpers
   squash <count>       Interactive commit squashing
+  svg <subcommand>     SVG to PNG conversion
   help [topic]         Show help
   version              Show version
 
@@ -59,11 +65,19 @@ GIT COMMANDS
 
 SQUASH COMMAND
   Interactive commit squashing with smart message formatting
-  
+
   hanif squash <count>
     → Shows last N commits, select which to squash into
     → Optionally provide custom message
     → Preserves all commits with hashes in message
+
+SVG COMMANDS
+  Convert SVG files to PNG at any size
+
+  hanif svg convert <file> <sizes>    Convert at custom sizes
+  hanif svg chrome <file>             Chrome extension icons (16,32,48,128)
+
+  Options: --prefix, --output-dir
 
 EXAMPLES
   hanif git sync
@@ -72,7 +86,10 @@ EXAMPLES
     → Creates: feature/jira-123_add_feature
   hanif squash 5
     → Interactively squash last 5 commits
+  hanif svg convert logo.svg 64,128,256
+  hanif svg chrome icon.svg --output-dir ./icons
   hanif help squash
+  hanif help svg
   hanif help git
 
 ADDING COMMANDS

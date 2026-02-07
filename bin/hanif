@@ -48,7 +48,13 @@ main() {
       source "${COMMANDS_DIR}/squash.sh"
       squash_command "$@"
       ;;
-    
+
+    svg)
+      # shellcheck source=../lib/commands/svg.sh
+      source "${COMMANDS_DIR}/svg.sh"
+      svg_command "$@"
+      ;;
+
     help|--help|-h)
       # shellcheck source=../lib/commands/help.sh
       source "${COMMANDS_DIR}/help.sh"
@@ -82,6 +88,7 @@ Usage: hanif <command> [options]
 Commands:
   git <subcommand>    Git helpers (sync, nf, up, etc.)
   squash <count>      Interactive commit squashing
+  svg <subcommand>    SVG to PNG conversion
   help [command]      Show help
   version             Show version
 
@@ -89,6 +96,8 @@ Examples:
   hanif git sync
   hanif git nf "add feature"
   hanif squash 5
+  hanif svg chrome icon.svg
+  hanif svg convert logo.svg 64,128,256
   hanif help git
 
 Add your own commands - see README.md

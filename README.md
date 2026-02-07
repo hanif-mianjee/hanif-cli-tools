@@ -11,6 +11,7 @@ A simple, extensible command-line tool for automating your daily tasks. Start wi
 
 - 🎨 **Simple & Extensible** - Easy to add new commands for any task
 - 🔧 **Git Helpers** - Common git workflows automated (includes smart sync)
+- 🖼️ **SVG Tools** - Convert SVG to PNG with auto-detected converters
 - ⚡️ **Fast** - Single command for complex workflows
 - 🎨 **Beautiful Output** - Clear, colored terminal messages
 
@@ -25,7 +26,7 @@ npm install -g hanif-cli
 ### Homebrew
 
 ```bash
-brew tap yourusername/hanif-cli
+brew tap hanif-mianjee/hanif-cli
 brew install hanif-cli
 ```
 
@@ -66,6 +67,12 @@ hanif git clean
 
 # Interactive commit squashing
 hanif squash 5
+
+# Convert SVG to PNG (custom sizes)
+hanif svg convert logo.svg 64,128,256
+
+# Generate Chrome extension icons
+hanif svg chrome icon.svg --output-dir src/assets/icons
 ```
 
 ## Commands
@@ -179,11 +186,42 @@ hanif squash 10
 # Select last commit (option 10) to squash everything
 ```
 
+### SVG Commands
+
+Convert SVG files to PNG with auto-detected converters (librsvg, Inkscape, or ImageMagick):
+
+```bash
+# Convert SVG to PNG at custom sizes
+hanif svg convert icon.svg 16,32,64
+# → icon16.png, icon32.png, icon64.png
+
+# Custom prefix and output directory
+hanif svg convert logo.svg 100,200,400 --prefix logo --output-dir ./out
+# → ./out/logo100.png, ./out/logo200.png, ./out/logo400.png
+
+# Generate Chrome extension icons (16, 32, 48, 128)
+hanif svg chrome icon.svg
+# → icon16.png, icon32.png, icon48.png, icon128.png
+
+hanif svg chrome icon.svg --output-dir src/assets/icons
+# → src/assets/icons/icon16.png, etc.
+```
+
+**Options:**
+- `--prefix, -p <name>` - Output filename prefix (default: `icon`, convert only)
+- `--output-dir, -o <dir>` - Output directory (default: current directory)
+
+**Supported converters** (auto-detected in order):
+1. **librsvg** (best) - `brew install librsvg`
+2. **Inkscape** - `brew install --cask inkscape`
+3. **ImageMagick** - `brew install imagemagick ghostscript`
+
 ### Help
 
 ```bash
 hanif help           # General help
 hanif help git       # Git command help
+hanif help svg       # SVG command help
 hanif version        # Show version
 ```
 
@@ -198,9 +236,11 @@ hanif-cli-tools/
 ├── lib/
 │   ├── commands/          # Command handlers
 │   │   ├── git.sh
+│   │   ├── svg.sh
 │   │   └── help.sh
 │   ├── functions/         # Core functionality
-│   │   └── git-functions.sh
+│   │   ├── git-functions.sh
+│   │   └── svg-functions.sh
 │   └── utils/             # Utilities
 │       └── common.sh
 ├── tests/                 # Test files
@@ -422,7 +462,7 @@ shasum -a 256 temp.tar.gz
 
 Users can install directly via:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/hanif-cli-tools/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash
 ```
 
 ### Automated Publishing
