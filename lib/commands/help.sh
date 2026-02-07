@@ -40,7 +40,7 @@ show_general_help() {
   cat << 'EOF'
 ┌─────────────────────────────────────────────┐
 │         Hanif CLI - Personal Tools          │
-│                 Version 1.0.0               │
+│                 Version 0.0.0               │
 └─────────────────────────────────────────────┘
 
 A simple, extensible CLI for your daily workflows.

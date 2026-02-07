@@ -1,10 +1,10 @@
 class HanifCli < Formula
   desc "Simple, extensible CLI for daily workflows"
   homepage "https://github.com/hanif-mianjee/hanif-cli-tools"
-  url "https://github.com/hanif-mianjee/hanif-cli-tools/archive/v1.0.0.tar.gz"
+  url "https://github.com/hanif-mianjee/hanif-cli-tools/archive/v0.0.0.tar.gz"
   sha256 "SHA256_CHECKSUM_HERE"
   license "MIT"
-  version "1.0.0"
+  version "0.0.0"
 
   depends_on "bash"
   depends_on "git"

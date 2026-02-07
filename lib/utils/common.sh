@@ -94,7 +94,7 @@ require_args() {
 
 # Get script version
 get_version() {
-  echo "${VERSION:-1.0.0}"
+  echo "${VERSION:-0.0.0}"
 }
 
 # Check minimum git version
