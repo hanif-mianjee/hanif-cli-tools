@@ -31,14 +31,14 @@ assert_success() {
   shift
   local command=("$@")
   
-  ((TESTS_RUN++)) || true || true
+  ((TESTS_RUN++)) || true
 
   if "${command[@]}" >/dev/null 2>&1; then
-    ((TESTS_PASSED++)) || true || true
+    ((TESTS_PASSED++)) || true
     echo -e "${GREEN}✓${NC} $description"
     return 0
   else
-    ((TESTS_FAILED++)) || true || true
+    ((TESTS_FAILED++)) || true
     echo -e "${RED}✗${NC} $description"
     echo -e "  ${RED}Command failed: ${command[*]}${NC}"
     return 1

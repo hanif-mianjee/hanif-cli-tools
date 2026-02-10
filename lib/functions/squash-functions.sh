@@ -94,12 +94,13 @@ EOSCRIPT
       chmod +x "$seq_script"
 
       # Start rebase with interactive squashing
-      GIT_SEQUENCE_EDITOR="$seq_script" $rebase_cmd
+      local rebase_ok=true
+      GIT_SEQUENCE_EDITOR="$seq_script" $rebase_cmd || rebase_ok=false
 
       rm -f "$seq_script"
 
-      # Check for paused rebase and inject commit message
-      if [ $? -eq 0 ]; then
+      # Apply commit message if rebase succeeded
+      if [ "$rebase_ok" = true ]; then
         # Write commit message to temp file to preserve formatting
         msg_file=$(mktemp)
         cat > "$msg_file" <<EOF
@@ -114,6 +115,8 @@ EOF
         fi
 
         success "Squash complete!"
+      else
+        warning "Rebase encountered conflicts. Resolve them and run: git rebase --continue"
       fi
 
       break

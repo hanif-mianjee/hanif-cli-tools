@@ -57,6 +57,7 @@ GIT COMMANDS
   rb <branch>          Rebase onto branch
   pull                 Fetch all + pull
   st                   Git status
+  amend ["message"]    Amend last commit with current changes
   squash [count]       Interactive commit squashing (default: 20)
 
 OTHER COMMANDS

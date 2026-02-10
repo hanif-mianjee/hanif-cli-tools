@@ -20,6 +20,15 @@ success() { echo -e "${GREEN}✓${NC} $*"; }
 error() { echo -e "${RED}✗${NC} $*" >&2; }
 warning() { echo -e "${YELLOW}⚠${NC} $*"; }
 
+# Portable in-place sed
+sed_inplace() {
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    sed_inplace "$@"
+  else
+    sed -i "$@"
+  fi
+}
+
 confirm() {
   local prompt="${1:-Continue?}"
   local response
@@ -113,16 +122,16 @@ main() {
     info "Updating version in all files..."
 
     # bin/hanif - VERSION variable
-    sed -i '' "s/^VERSION=\".*\"/VERSION=\"${new_version}\"/" bin/hanif
+    sed_inplace "s/^VERSION=\".*\"/VERSION=\"${new_version}\"/" bin/hanif
     success "Updated bin/hanif"
 
     # hanif-cli.rb - version and url
-    sed -i '' "s|archive/v.*\.tar\.gz|archive/v${new_version}.tar.gz|" hanif-cli.rb
-    sed -i '' "s/^  version \".*\"/  version \"${new_version}\"/" hanif-cli.rb
+    sed_inplace "s|archive/v.*\.tar\.gz|archive/v${new_version}.tar.gz|" hanif-cli.rb
+    sed_inplace "s/^  version \".*\"/  version \"${new_version}\"/" hanif-cli.rb
     success "Updated hanif-cli.rb"
 
     # README.md - version badge
-    sed -i '' "s/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-${new_version}-blue/" README.md
+    sed_inplace "s/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-${new_version}-blue/" README.md
     success "Updated README.md badge"
 
     # CHANGELOG.md - open for manual editing
@@ -162,8 +171,23 @@ main() {
   git push origin "$branch"
   git push origin "v${new_version}"
   success "Pushed to git"
-  
-  # 14. Publish to npm
+
+  # 14. Update Homebrew formula SHA256
+  info "Computing SHA256 for Homebrew formula..."
+  local tarball_url="https://github.com/hanif-mianjee/hanif-cli-tools/archive/v${new_version}.tar.gz"
+  local sha256
+  sha256=$(curl -fsSL "$tarball_url" | shasum -a 256 | awk '{print $1}')
+  if [[ -n "$sha256" ]]; then
+    sed_inplace "s/sha256 \".*\"/sha256 \"${sha256}\"/" hanif-cli.rb
+    git add hanif-cli.rb
+    git commit -m "chore: update Homebrew SHA256 for v${new_version}"
+    git push origin "$branch"
+    success "Updated Homebrew formula SHA256: ${sha256}"
+  else
+    warning "Could not compute SHA256 - update hanif-cli.rb manually"
+  fi
+
+  # 15. Publish to npm (disabled)
   if confirm "Publish to npm?"; then
     info "Publishing to npm..."
     if npm publish; then
@@ -177,12 +201,11 @@ main() {
     warning "Skipped npm publish"
   fi
   
-  # 15. Create GitHub release
+  # 16. Create GitHub release
   echo ""
   info "Next steps:"
   echo "  1. Create GitHub release: https://github.com/hanif-mianjee/hanif-cli-tools/releases/new"
-  echo "  2. Update Homebrew formula with new sha256"
-  echo "  3. Test installation:"
+  echo "  2. Test installation:"
   echo "       npm install -g hanif-cli"
   echo "       hanif version"
   echo ""

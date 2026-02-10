@@ -75,6 +75,10 @@ main() {
       source "${COMMANDS_DIR}/git.sh"
       git_command st "$@"
       ;;
+    amend)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command amend "$@"
+      ;;
 
     # Backward-compatible `hanif git <subcommand>` form
     # TODO(deprecation): Remove in v2.0.0 — use `hanif <subcommand>` directly
@@ -140,6 +144,7 @@ Git Commands:
   rb <branch>         Rebase onto branch
   pull                Fetch all + pull
   st                  Git status
+  amend ["message"]   Amend last commit with current changes
   squash [count]      Interactive commit squashing (default: 20)
 
 Other Commands:

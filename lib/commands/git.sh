@@ -8,6 +8,8 @@ source "${FUNCTIONS_DIR}/git-functions.sh"
 
 # Git subcommand dispatcher
 git_command() {
+  check_git_version
+
   if [[ $# -eq 0 ]]; then
     show_git_usage
     exit 1
@@ -50,6 +52,10 @@ git_command() {
     
     status|st)
       git status "$@"
+      ;;
+
+    amend)
+      gitamend "$@"
       ;;
     
     sync)
@@ -105,6 +111,7 @@ Commands:
   upall, updateall         Update all branches
   clean                    Delete branches removed from remote
   rb, rebase <branch>      Rebase onto branch
+  amend ["message"]         Amend last commit with changes
   pull                     Fetch all + pull
   st, status               Git status
 
@@ -170,6 +177,16 @@ REBASE (rb)
   Rebase current branch (updates base, stashes, rebases)
 
   hanif rb main
+
+AMEND
+  Amend last commit with all current changes
+  Updates commit date. Useful for small fixes/typos.
+
+  hanif amend
+    → Stages all changes, amends last commit (keeps message)
+
+  hanif amend "updated message"
+    → Stages all changes, amends with new message
 
 PULL
   Fetch all remotes and pull

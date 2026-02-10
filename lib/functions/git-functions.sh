@@ -240,3 +240,28 @@ gitrebase() {
 
   echo "✅ Done! '$current_branch' rebased onto '$base_branch'"
 }
+
+# gitamend - Amend the last commit with staged changes
+# Usage: gitamend          (keeps existing message, stages all changes)
+#        gitamend "msg"    (updates commit message)
+# - Stages all changes, amends last commit with current date
+# - Useful for small fixes/typos you want folded into the last commit
+gitamend() {
+  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+
+  # Stage all changes
+  git add -A
+
+  if [[ -z "$(git diff --cached --name-only)" ]]; then
+    echo "⚠️ No changes to amend"
+    return 1
+  fi
+
+  if [[ -n "${1:-}" ]]; then
+    git commit --amend --date=now --no-verify -m "$1"
+  else
+    git commit --amend --date=now --no-edit --no-verify
+  fi
+
+  echo "✅ Amended last commit"
+}
