@@ -55,6 +55,15 @@ test_sanitize_branch_name() {
   # Note: leading/trailing spaces become underscores, then get trimmed
   result=$(sanitize_branch_name "Test__Feature")
   assert_equals "Sanitize with extra underscores" "test_feature" "$result"
+
+  result=$(sanitize_branch_name "fix - bug")
+  assert_equals "Sanitize with dash surrounded by spaces" "fix_bug" "$result"
+
+  result=$(sanitize_branch_name "add / feature")
+  assert_equals "Sanitize with slash surrounded by spaces" "add_feature" "$result"
+
+  result=$(sanitize_branch_name "hello   world")
+  assert_equals "Sanitize with multiple spaces" "hello_world" "$result"
 }
 
 # Test: Git helper - newfeature
@@ -83,6 +92,19 @@ test_newfeature_with_ticket() {
   current_branch=$(git rev-parse --abbrev-ref HEAD)
   
   assert_equals "Creates feature branch with ticket" "feature/OM-755_fix_login_bug" "$current_branch"
+}
+
+# Test: Git helper - newfeature with special characters
+test_newfeature_special_chars() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  newfeature "fix - bug" >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "Creates branch without double underscores" "feature/fix_bug" "$current_branch"
 }
 
 # Test: CLI executable exists
@@ -135,6 +157,7 @@ main() {
   suite "Git Functions"
   run_test test_newfeature_basic
   run_test test_newfeature_with_ticket
+  run_test test_newfeature_special_chars
   
   suite "CLI Interface"
   test_cli_executable

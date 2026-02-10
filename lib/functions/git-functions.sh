@@ -93,10 +93,10 @@ gitclean() {
 
     # Check if upstream still exists (using local refs after fetch -p)
     if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
-      echo "🗑 Deleting branch (gone from remote): $branch"
+      echo "🗑  Deleting branch (gone from remote): $branch"
       git branch -D "$branch"
     else
-      echo "✔ Keeping active branch: $branch"
+      echo "✅ Keeping active branch: $branch"
     fi
   done
 }
@@ -135,13 +135,14 @@ newfeature() {
   
   # Step 3: Clean description to be git-branch-safe
   # - Keep only: letters, numbers, spaces, underscores, hyphens
+  # - Collapse multiple spaces/hyphens into single space
   # - Convert spaces to underscores
-  # Example: ": fix bug!" → "__fix_bug"
-  local clean=$(echo "$description" | tr -cd '[:alnum:] _-' | tr ' ' '_')
-  
+  # Example: ": fix - bug!" → "fix_bug"
+  local clean=$(echo "$description" | tr -cd '[:alnum:] _-' | sed -E 's/[[:space:]_-]+/ /g' | tr ' ' '_')
+
   # Step 4: Normalize multiple underscores to single underscore
   # Example: "__fix_bug" → "_fix_bug"
-  clean=$(echo "$clean" | sed 's/_\+/_/g')
+  clean=$(echo "$clean" | sed -E 's/_+/_/g')
   
   # Step 5: Trim leading/trailing underscores
   # Example: "_fix_bug" → "fix_bug"

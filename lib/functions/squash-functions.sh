@@ -80,10 +80,17 @@ EOF
 
       # Create temp script for GIT_SEQUENCE_EDITOR to squash all except the first
       seq_script=$(mktemp)
-      cat > "$seq_script" <<'EOSCRIPT'
+      if [[ "$(uname -s)" == "Darwin" ]]; then
+        cat > "$seq_script" <<'EOSCRIPT'
 #!/bin/bash
 sed -i '' '2,$s/^pick /squash /' "$1"
 EOSCRIPT
+      else
+        cat > "$seq_script" <<'EOSCRIPT'
+#!/bin/bash
+sed -i '2,$s/^pick /squash /' "$1"
+EOSCRIPT
+      fi
       chmod +x "$seq_script"
 
       # Start rebase with interactive squashing

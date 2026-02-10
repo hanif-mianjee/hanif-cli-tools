@@ -61,6 +61,7 @@ GIT COMMANDS
 
 OTHER COMMANDS
   svg <subcommand>     SVG to PNG conversion
+  self-update          Update Hanif CLI to latest version
   help [topic]         Show help
   version              Show version
 

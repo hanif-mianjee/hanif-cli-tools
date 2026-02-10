@@ -154,12 +154,13 @@ sanitize_branch_name() {
   local input="$1"
   
   # Keep only alphanumeric, spaces, underscores, hyphens
+  # Then collapse runs of spaces/underscores/hyphens into a single space
   local clean
-  clean=$(echo "$input" | tr -cd '[:alnum:] _-')
-  
+  clean=$(echo "$input" | tr -cd '[:alnum:] _-' | sed -E 's/[[:space:]_-]+/ /g')
+
   # Convert spaces to underscores
   clean=$(echo "$clean" | tr ' ' '_')
-  
+
   # Normalize multiple underscores to single
   clean=$(echo "$clean" | sed -E 's/_+/_/g')
   
@@ -170,6 +171,15 @@ sanitize_branch_name() {
   clean=$(echo "$clean" | tr '[:upper:]' '[:lower:]')
   
   echo "$clean"
+}
+
+# Portable in-place sed (macOS requires -i '', Linux requires -i)
+sed_inplace() {
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    sed -i '' "$@"
+  else
+    sed -i "$@"
+  fi
 }
 
 # Check if running in CI environment
@@ -216,4 +226,4 @@ export -f confirm separator header require_args
 export -f get_version check_git_version
 export -f safe_stash safe_stash_pop
 export -f truncate_string sanitize_branch_name
-export -f is_ci debug retry
+export -f sed_inplace is_ci debug retry

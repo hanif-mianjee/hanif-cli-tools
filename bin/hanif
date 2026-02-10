@@ -21,6 +21,10 @@ FUNCTIONS_DIR="${LIB_DIR}/functions"
 # shellcheck source=../lib/utils/common.sh
 source "${UTILS_DIR}/common.sh"
 
+# Source update check
+# shellcheck source=../lib/utils/update-check.sh
+source "${UTILS_DIR}/update-check.sh"
+
 # CLI Version
 VERSION="0.1.0"
 
@@ -98,6 +102,11 @@ main() {
       show_help "$@"
       ;;
 
+    self-update)
+      source "${FUNCTIONS_DIR}/update-functions.sh"
+      self_update
+      ;;
+
     version|--version|-v)
       echo "Hanif CLI v${VERSION}"
       ;;
@@ -135,6 +144,7 @@ Git Commands:
 
 Other Commands:
   svg <subcommand>    SVG to PNG conversion
+  self-update         Update Hanif CLI to latest version
   help [command]      Show help
   version             Show version
 
@@ -150,3 +160,6 @@ EOF
 
 # Run main function
 main "$@"
+
+# Check for updates in background (non-blocking)
+check_for_updates
