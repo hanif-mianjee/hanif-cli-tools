@@ -103,7 +103,7 @@ debug "Message"       # Only shown with DEBUG=1
 
 ```bash
 # Run all tests
-npm test
+bash tests/run-tests.sh
 
 # Run specific test
 bash tests/test-git.sh
@@ -150,8 +150,7 @@ GIT_TRACE=1 hanif up
 ## Publishing
 
 ```bash
-# Update version in package.json and bin/hanif
-npm publish
+bash scripts/publish.sh
 ```
 
 ## Key Variables (bin/hanif)

@@ -23,7 +23,7 @@ warning() { echo -e "${YELLOW}⚠${NC} $*"; }
 # Portable in-place sed
 sed_inplace() {
   if [[ "$(uname -s)" == "Darwin" ]]; then
-    sed_inplace "$@"
+    sed -i '' "$@"
   else
     sed -i "$@"
   fi
@@ -39,14 +39,28 @@ confirm() {
   esac
 }
 
+# Bump a semver version string
+# Usage: bump_version "1.2.3" "patch|minor|major"
+bump_version() {
+  local version="$1"
+  local bump_type="$2"
+  local major minor patch
+  IFS='.' read -r major minor patch <<< "$version"
+  case "$bump_type" in
+    patch) echo "${major}.${minor}.$((patch + 1))" ;;
+    minor) echo "${major}.$((minor + 1)).0" ;;
+    major) echo "$((major + 1)).0.0" ;;
+  esac
+}
+
 main() {
   cd "$PROJECT_ROOT"
-  
+
   echo "┌─────────────────────────────────────────────┐"
   echo "│       Hanif CLI Publishing Script           │"
   echo "└─────────────────────────────────────────────┘"
   echo ""
-  
+
   # 1. Check git status
   info "Checking git status..."
   if [[ -n "$(git status --porcelain)" ]]; then
@@ -55,7 +69,7 @@ main() {
     exit 1
   fi
   success "Working directory is clean"
-  
+
   # 2. Check branch
   local branch
   branch=$(git rev-parse --abbrev-ref HEAD)
@@ -66,12 +80,12 @@ main() {
     fi
   fi
   success "On branch: $branch"
-  
+
   # 3. Pull latest
   info "Pulling latest changes..."
   git pull origin "$branch"
   success "Up to date"
-  
+
   # 4. Run tests
   info "Running tests..."
   if ! bash tests/run-tests.sh; then
@@ -79,56 +93,48 @@ main() {
     exit 1
   fi
   success "All tests passed"
-  
+
   # 5. Run linter
   if command -v shellcheck >/dev/null 2>&1; then
     info "Running linter..."
     shellcheck bin/hanif lib/**/*.sh 2>/dev/null || warning "Linter found issues"
   fi
-  
-  # 6. Get current version
+
+  # 6. Get current version from bin/hanif
   local current_version
-  current_version=$(grep '"version"' package.json | head -1 | cut -d'"' -f4)
+  current_version=$(grep '^VERSION=' bin/hanif | head -1 | cut -d'"' -f2)
   info "Current version: $current_version"
-  
+
   # 7. Ask for version bump
   echo ""
   echo "Select version bump type:"
-  echo "  1) patch (${current_version} → $(npm version patch --no-git-tag-version 2>/dev/null | tail -1 | tr -d 'v'))"
-  echo "  2) minor (${current_version} → $(npm version minor --no-git-tag-version 2>/dev/null | tail -1 | tr -d 'v'))"
-  echo "  3) major (${current_version} → $(npm version major --no-git-tag-version 2>/dev/null | tail -1 | tr -d 'v'))"
+  echo "  1) patch (${current_version} → $(bump_version "$current_version" patch))"
+  echo "  2) minor (${current_version} → $(bump_version "$current_version" minor))"
+  echo "  3) major (${current_version} → $(bump_version "$current_version" major))"
   echo "  4) custom"
   echo "  5) skip (keep current version)"
-  
-  # Reset package.json after preview
-  git checkout package.json 2>/dev/null
-  
+
   read -r -p "Choice [1-5]: " choice
-  
+
   local new_version=""
   case "$choice" in
-    1) npm version patch --no-git-tag-version; new_version=$(grep '"version"' package.json | head -1 | cut -d'"' -f4) ;;
-    2) npm version minor --no-git-tag-version; new_version=$(grep '"version"' package.json | head -1 | cut -d'"' -f4) ;;
-    3) npm version major --no-git-tag-version; new_version=$(grep '"version"' package.json | head -1 | cut -d'"' -f4) ;;
-    4) read -r -p "Enter version: " new_version; npm version "$new_version" --no-git-tag-version ;;
+    1) new_version=$(bump_version "$current_version" patch) ;;
+    2) new_version=$(bump_version "$current_version" minor) ;;
+    3) new_version=$(bump_version "$current_version" major) ;;
+    4) read -r -p "Enter version: " new_version ;;
     5) new_version="$current_version" ;;
     *) error "Invalid choice"; exit 1 ;;
   esac
-  
+
   info "Version: $new_version"
-  
-  # 8. Update version in other files
+
+  # 8. Update version in files
   if [[ "$new_version" != "$current_version" ]]; then
     info "Updating version in all files..."
 
     # bin/hanif - VERSION variable
     sed_inplace "s/^VERSION=\".*\"/VERSION=\"${new_version}\"/" bin/hanif
     success "Updated bin/hanif"
-
-    # hanif-cli.rb - version and url
-    sed_inplace "s|archive/v.*\.tar\.gz|archive/v${new_version}.tar.gz|" hanif-cli.rb
-    sed_inplace "s/^  version \".*\"/  version \"${new_version}\"/" hanif-cli.rb
-    success "Updated hanif-cli.rb"
 
     # README.md - version badge
     sed_inplace "s/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-${new_version}-blue/" README.md
@@ -139,77 +145,48 @@ main() {
       ${EDITOR:-vim} CHANGELOG.md
     fi
   fi
-  
+
   # 9. Build
   info "Running build..."
   bash scripts/build.sh
   success "Build complete"
-  
+
   # 10. Review changes
   echo ""
   info "Review changes:"
   git diff
   echo ""
-  
+
   if ! confirm "Proceed with publishing?"; then
     warning "Aborted"
     exit 0
   fi
-  
+
   # 11. Commit version bump
   if [[ "$new_version" != "$current_version" ]]; then
-    git add package.json bin/hanif hanif-cli.rb CHANGELOG.md README.md
+    git add bin/hanif CHANGELOG.md README.md
     git commit -m "chore: release version $new_version"
   fi
-  
+
   # 12. Create tag
   git tag -a "v${new_version}" -m "Release version ${new_version}"
   success "Created tag: v${new_version}"
-  
+
   # 13. Push
   info "Pushing to git..."
   git push origin "$branch"
   git push origin "v${new_version}"
   success "Pushed to git"
 
-  # 14. Update Homebrew formula SHA256
-  info "Computing SHA256 for Homebrew formula..."
-  local tarball_url="https://github.com/hanif-mianjee/hanif-cli-tools/archive/v${new_version}.tar.gz"
-  local sha256
-  sha256=$(curl -fsSL "$tarball_url" | shasum -a 256 | awk '{print $1}')
-  if [[ -n "$sha256" ]]; then
-    sed_inplace "s/sha256 \".*\"/sha256 \"${sha256}\"/" hanif-cli.rb
-    git add hanif-cli.rb
-    git commit -m "chore: update Homebrew SHA256 for v${new_version}"
-    git push origin "$branch"
-    success "Updated Homebrew formula SHA256: ${sha256}"
-  else
-    warning "Could not compute SHA256 - update hanif-cli.rb manually"
-  fi
-
-  # 15. Publish to npm (disabled)
-  if confirm "Publish to npm?"; then
-    info "Publishing to npm..."
-    if npm publish; then
-      success "Published to npm"
-    else
-      error "npm publish failed"
-      warning "Tag v${new_version} has been created but not pushed to npm"
-      exit 1
-    fi
-  else
-    warning "Skipped npm publish"
-  fi
-  
-  # 16. Create GitHub release
+  # 14. Done
   echo ""
   info "Next steps:"
   echo "  1. Create GitHub release: https://github.com/hanif-mianjee/hanif-cli-tools/releases/new"
   echo "  2. Test installation:"
-  echo "       npm install -g hanif-cli"
+  echo "       curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash"
   echo "       hanif version"
   echo ""
-  
+
   success "Publishing complete! 🎉"
 }
 

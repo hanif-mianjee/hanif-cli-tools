@@ -15,13 +15,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-          registry-url: 'https://registry.npmjs.org'
-      
+
       - name: Get version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -30,11 +24,6 @@ jobs:
         run: |
           chmod +x bin/hanif tests/*.sh
           bash tests/run-tests.sh
-      
-      # - name: Publish to npm
-      #   run: npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Extract changelog
         id: changelog

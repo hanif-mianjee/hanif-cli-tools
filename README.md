@@ -8,14 +8,7 @@
 ## Installation
 
 ```bash
-# Direct (recommended)
 curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash
-
-# npm (not available)
-# npm install -g hanif-cli
-
-# Homebrew (not available)
-# brew tap hanif-mianjee/hanif-cli && brew install hanif-cli
 ```
 
 ## Git Commands
@@ -65,7 +58,7 @@ hanif svg chrome icon.svg                                 # Chrome extension ico
 git clone https://github.com/hanif-mianjee/hanif-cli-tools.git
 cd hanif-cli-tools
 bash scripts/dev-install.sh
-npm test
+bash tests/run-tests.sh
 ```
 
 ### Project Structure

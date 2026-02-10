@@ -22,7 +22,7 @@
 - Git helper commands (sync, newfeature, up, upall, clean, rebase)
 - JIRA/ticket number extraction in feature branches
 - Simple testing framework
-- Installation scripts (npm, Homebrew, direct)
+- Installation script (direct install via curl)
 - Documentation
 
 [0.0.0]: https://github.com/hanif-mianjee/hanif-cli-tools/releases/tag/v0.0.0

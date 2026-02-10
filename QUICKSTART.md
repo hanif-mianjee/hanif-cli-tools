@@ -70,8 +70,6 @@ hanif rb main
 
 ```bash
 bash tests/run-tests.sh
-# or
-npm test
 ```
 
 ## Project Structure

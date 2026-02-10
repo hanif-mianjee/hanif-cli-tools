@@ -37,7 +37,7 @@ bash tests/run-tests.sh
 
 ```bash
 # Run all tests
-npm test
+bash tests/run-tests.sh
 
 # Run specific test
 bash tests/test-git.sh
@@ -56,16 +56,13 @@ hanif nf "add-new-feature"
 
 # Make changes, test locally
 ./bin/hanif mycommand
-npm test
-
-# Lint
-npm run lint
+bash tests/run-tests.sh
 ```
 
 ## Pull Requests
 
 - Clear description of changes
-- All tests passing (`npm test`)
+- All tests passing (`bash tests/run-tests.sh`)
 - One feature per PR
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
 

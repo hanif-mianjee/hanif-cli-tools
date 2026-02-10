@@ -39,9 +39,3 @@ Discovered bugs in Hanif CLI, ordered by severity. All bugs have been fixed.
 - **File:** `tests/test-framework.sh:34`
 - **Description:** `((TESTS_RUN++)) || true || true` — the second `|| true` is redundant.
 - **Fix:** Simplified all occurrences to `((TESTS_RUN++)) || true`.
-
-## 7. LOW: Homebrew Formula Has Placeholder SHA256 — FIXED
-
-- **File:** `hanif-cli.rb:5`
-- **Description:** The SHA256 checksum is set to `"SHA256_CHECKSUM_HERE"` — a placeholder value.
-- **Fix:** Updated `scripts/publish.sh` to automatically download the release tarball, compute SHA256, update `hanif-cli.rb`, and commit the change during the publish flow.

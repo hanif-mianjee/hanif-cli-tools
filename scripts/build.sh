@@ -31,7 +31,6 @@ main() {
     "lib/commands/help.sh"
     "lib/functions/git-functions.sh"
     "lib/utils/common.sh"
-    "package.json"
     "README.md"
   )
   
@@ -76,33 +75,15 @@ main() {
     info "Skipping shellcheck (not installed)"
   fi
   
-  # 5. Validate package.json
-  info "Validating package.json..."
-  if command -v node >/dev/null 2>&1; then
-    if node -e "JSON.parse(require('fs').readFileSync('package.json'))"; then
-      success "package.json is valid"
-    else
-      error "package.json is invalid"
-      exit 1
-    fi
-  fi
-  
-  # 6. Create distribution info
+  # 5. Create distribution info
   info "Creating build info..."
   cat > .buildinfo << EOF
 Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-Version: $(grep '"version"' package.json | head -1 | cut -d'"' -f4)
+Version: $(grep '^VERSION=' bin/hanif | head -1 | cut -d'"' -f2)
 Git Commit: $(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 Git Branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 EOF
   success "Build info created"
-  
-  # 7. Create package (dry run)
-  if command -v npm >/dev/null 2>&1; then
-    info "Testing npm pack..."
-    npm pack --dry-run > /dev/null
-    success "Package structure validated"
-  fi
   
   echo ""
   success "Build complete!"
@@ -110,7 +91,7 @@ EOF
   echo "Next steps:"
   echo "  1. Review changes: git status"
   echo "  2. Test locally: ./bin/hanif help"
-  echo "  3. Publish: npm publish"
+  echo "  3. Publish: bash scripts/publish.sh"
   echo ""
   
   cat .buildinfo
