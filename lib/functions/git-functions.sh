@@ -252,15 +252,19 @@ gitamend() {
   # Stage all changes
   git add -A
 
+  local has_changes=true
   if [[ -z "$(git diff --cached --name-only)" ]]; then
-    echo "⚠️ No changes to amend"
-    return 1
+    has_changes=false
   fi
 
   if [[ -n "${1:-}" ]]; then
-    git commit --amend --date=now --no-verify -m "$1"
-  else
+    # Message provided: amend even without changes (to update message)
+    git commit --amend --date=now --no-verify -m "$*"
+  elif [[ "$has_changes" = true ]]; then
     git commit --amend --date=now --no-edit --no-verify
+  else
+    echo "⚠️ No changes to amend and no message provided"
+    return 1
   fi
 
   echo "✅ Amended last commit"

@@ -49,8 +49,8 @@ EOF
       printf "Message: "
       read custom_msg
       
-      # Trim whitespace from custom message
-      custom_msg=$(echo "$custom_msg" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+      # Trim whitespace and surrounding quotes from custom message
+      custom_msg=$(echo "$custom_msg" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^"\(.*\)"$/\1/; s/^'"'"'\(.*\)'"'"'$/\1/')
       
       # Check if the selected commit is the root commit (has no parent).
       # Only use --root rebase when the commit genuinely has no parent,

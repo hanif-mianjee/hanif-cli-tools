@@ -23,6 +23,8 @@ hanif clean                         # Delete branches removed from remote
 hanif rb main                       # Rebase onto branch
 hanif pull                          # Fetch all + pull
 hanif st                            # Git status
+hanif amend                         # Amend last commit (keep message)
+hanif amend "new message"           # Amend last commit with new message
 ```
 
 Smart branch naming with `nf`:

@@ -27,6 +27,12 @@ show_help() {
       show_svg_help
       ;;
 
+    # Git subcommands route to git help
+    sync|nf|up|upall|clean|rb|pull|st|amend)
+      source "${COMMANDS_DIR}/git.sh"
+      show_git_help
+      ;;
+
     *)
       echo "❌ No help available for: $topic"
       echo ""
