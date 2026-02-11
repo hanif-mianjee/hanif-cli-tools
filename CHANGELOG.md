@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.2] - 2026-02-11
+
+### Fixed
+- Squash command now strips surrounding quotes from custom commit messages
+- `hanif amend "message"` now uses the full message instead of only the first word
+- `hanif amend "message"` now works even when there are no staged changes (updates commit message only)
+- `hanif nf --help` no longer creates a `feature/help` branch; shows help instead
+- All git subcommands (`nf`, `up`, `upall`, `clean`, `rb`, `amend`) now handle `--help`/`-h` flags correctly
+- Publish script now stages lib files changed by the build step, preventing dirty working directory after release
+
+### Changed
+- Updated README with detailed squash command result examples
+- Added `hanif amend` command to README documentation
+- Help topics now route git subcommands (e.g., `hanif help amend`) to git help page
+
 ## [Unreleased]
 
 ### Added
@@ -25,4 +40,5 @@
 - Installation script (direct install via curl)
 - Documentation
 
+[0.2.2]: https://github.com/hanif-mianjee/hanif-cli-tools/releases/tag/v0.2.2
 [0.0.0]: https://github.com/hanif-mianjee/hanif-cli-tools/releases/tag/v0.0.0
