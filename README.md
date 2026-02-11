@@ -39,10 +39,26 @@ Interactive commit squashing with smart message formatting:
 ```bash
 hanif squash          # Shows last 20 commits (default)
 hanif squash 5        # Shows last 5 commits
-# Select which commit to squash into
-# Optionally provide a custom message
-# All commits preserved with hashes in final message
 ```
+
+**Workflow:** Select a commit to squash into, then optionally provide a custom message. All squashed commits are preserved with their hashes in the final message.
+
+Result with custom message:
+```
+OM-1200 Major refactor
+* 1a6c6d8 Third commit
+* ef3798f Fourth commit
+* a524b8f Fifth commit
+```
+
+Result without custom message (uses selected commit's message):
+```
+Third commit
+* ef3798f Fourth commit
+* a524b8f Fifth commit
+```
+
+Run `hanif squash --help` for the full guide.
 
 ## SVG Commands
 

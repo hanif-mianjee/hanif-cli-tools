@@ -24,22 +24,37 @@ git_command() {
         error "Usage: hanif nf \"description\""
         exit 1
       fi
+      case "$1" in
+        help|--help|-h) show_git_help; return ;;
+      esac
       newfeature "$@"
       ;;
     
     up|update)
+      case "${1:-}" in
+        help|--help|-h) show_git_help; return ;;
+      esac
       gitup "$@"
       ;;
-    
+
     upall|updateall)
+      case "${1:-}" in
+        help|--help|-h) show_git_help; return ;;
+      esac
       gitupall "$@"
       ;;
-    
+
     clean)
+      case "${1:-}" in
+        help|--help|-h) show_git_help; return ;;
+      esac
       gitclean "$@"
       ;;
     
     rebase|rb)
+      case "${1:-}" in
+        help|--help|-h) show_git_help; return ;;
+      esac
       gitrebase "$@"
       ;;
     
@@ -55,6 +70,9 @@ git_command() {
       ;;
 
     amend)
+      case "${1:-}" in
+        help|--help|-h) show_git_help; return ;;
+      esac
       gitamend "$@"
       ;;
     
