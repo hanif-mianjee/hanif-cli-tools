@@ -164,7 +164,7 @@ main() {
 
   # 11. Commit version bump
   if [[ "$new_version" != "$current_version" ]]; then
-    git add bin/hanif CHANGELOG.md README.md
+    git add bin/hanif CHANGELOG.md README.md lib/commands/*.sh lib/functions/*.sh lib/utils/*.sh
     git commit -m "chore: release version $new_version"
   fi
 
