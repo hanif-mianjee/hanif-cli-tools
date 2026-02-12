@@ -94,10 +94,7 @@ parse_bumpversion_config() {
     error "Config file not found: $config_file"
     if confirm "Initialize bumpversion config now?"; then
       bumpversion_init
-      # Re-check if config was created
-      if [[ ! -f "$config_file" ]]; then
-        return 1
-      fi
+      return 1
     else
       info "Run 'hanif bv init' to create a config"
       return 1
@@ -416,7 +413,9 @@ _bv_verify_files() {
 
     local search
     search=$(_bv_get_file_prop "$idx" "search")
-    search="${search:-{current_version\}}"
+    if [[ -z "$search" ]]; then
+      search="{current_version}"
+    fi
     search=$(echo "$search" | sed "s/{current_version}/${current_version}/g")
 
     if ! grep -qF "$search" "$file"; then
@@ -462,8 +461,12 @@ update_version_files() {
     replace=$(_bv_get_file_prop "$idx" "replace")
 
     # Default patterns
-    search="${search:-{current_version\}}"
-    replace="${replace:-{new_version\}}"
+    if [[ -z "$search" ]]; then
+      search="{current_version}"
+    fi
+    if [[ -z "$replace" ]]; then
+      replace="{new_version}"
+    fi
 
     # Interpolate placeholders
     search=$(echo "$search" | sed "s/{current_version}/${current_version}/g; s/{new_version}/${new_version}/g")
@@ -700,7 +703,7 @@ bump_version() {
     release_optional=$(_bv_get_part "release" "optional_value")
     if [[ -z "$current_release" || "$current_release" == "$release_optional" ]]; then
       error "Current version $current_version is a stable release — cannot promote to rc."
-      info "Use one of: patch, minor, major, or custom"
+      info "Use one of: patch, minor, or major"
       echo "  hanif bv patch    # $current_version → next patch rc"
       echo "  hanif bv minor    # $current_version → next minor rc"
       echo "  hanif bv major    # $current_version → next major rc"
@@ -1020,6 +1023,7 @@ bumpversion_init() {
   # Generate config
   cat > "$config_file" << EOF
 # Managed by Hanif CLI (hanif bv)
+# https://github.com/hanif-mianjee/hanif-cli-tools
 # Docs: hanif bv --help
 #
 # Workflow: patch/minor/major → creates RC → rc to iterate → release to promote
@@ -1182,10 +1186,18 @@ migrate_from_tbump() {
 
   cat > ".bumpversion.cfg" << EOF
 # Managed by Hanif CLI (hanif bv)
+# https://github.com/hanif-mianjee/hanif-cli-tools
 # Docs: hanif bv --help
 #
 # Workflow: patch/minor/major → creates RC → rc to iterate → release to promote
 # Example: hanif bv patch → 1.0.1-rc0 → hanif bv rc → 1.0.1-rc1 → hanif bv release → 1.0.1
+#
+# commit: auto-commit version changes (True/False)
+# tag: auto-create git tag (True/False)
+# tag_name: tag template ({new_version} is replaced)
+# parse: regex to decompose version into parts
+# serialize: patterns to format version (first match wins)
+# commit_message: template for commit ({current_version}, {new_version} replaced)
 
 [bumpversion]
 current_version = ${version}
