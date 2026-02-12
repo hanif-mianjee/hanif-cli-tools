@@ -15,9 +15,6 @@ bumpversion_command() {
     init)
       bumpversion_init "$@"
       ;;
-    migrate)
-      bumpversion_migrate "$@"
-      ;;
     patch|minor|major|rc|release)
       bump_version "$subcommand" "$@"
       ;;
@@ -52,7 +49,6 @@ Subcommands:
   rc               Bump release candidate
   release          Promote RC to release
   init             Initialize .bumpversion.cfg
-  migrate          Migrate from another tool
 
 For detailed help: hanif bv --help
 
@@ -84,7 +80,6 @@ SUBCOMMANDS
   rc               Bump RC number        (1.0.1-rc0 → 1.0.1-rc1)
   release          Promote to release    (1.0.1-rc1 → 1.0.1)
   init             Initialize config for this project
-  migrate          Migrate from bump2version, tbump, etc.
   help             Show this help
 
 CONFIG (.bumpversion.cfg)
@@ -127,9 +122,6 @@ EXAMPLES
   hanif bv major        # 1.0.0 → 2.0.0-rc0
   hanif bv rc           # 1.0.1-rc0 → 1.0.1-rc1
   hanif bv release      # 1.0.1-rc1 → 1.0.1
-
-  # Migrate from bump2version
-  hanif bv migrate
 
 TIPS
   • All bumps (patch/minor/major) produce RC versions by default

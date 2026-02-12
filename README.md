@@ -62,20 +62,29 @@ Run `hanif squash --help` for the full guide.
 
 ## Bumpversion Command
 
-Bump2version-compatible version bumping with RC release workflow:
+Semantic version bumping with RC (release candidate) workflow:
 
 ```bash
 hanif bv              # Interactive bump with preview menu
 hanif bv init         # Initialize .bumpversion.cfg for your project
 hanif bv patch        # 1.0.0 → 1.0.1-rc0
-hanif bv rc           # 1.0.1-rc0 → 1.0.1-rc1
-hanif bv release      # 1.0.1-rc1 → 1.0.1
 hanif bv minor        # 1.0.0 → 1.1.0-rc0
 hanif bv major        # 1.0.0 → 2.0.0-rc0
-hanif bv migrate      # Migrate from bump2version/tbump
+hanif bv rc           # 1.0.1-rc0 → 1.0.1-rc1
+hanif bv release      # 1.0.1-rc1 → 1.0.1
 ```
 
-**Workflow:** Initialize with `hanif bv init`, then use `patch`/`minor`/`major` to create RC versions, `rc` to iterate, and `release` to promote. Handles git commits, tags, and multi-file version updates automatically.
+**Workflow:** Initialize with `hanif bv init`, then use `patch`/`minor`/`major` to create RC versions, `rc` to iterate, and `release` to promote.
+
+**Features:**
+
+- Auto-detects project type (Node.js, Python, Rust, Java, etc.)
+- Updates version strings across all configured files
+- Git commit and tag automation with push prompts
+- Tag conflict detection with interactive resolution
+- Pre-flight verification prevents partial updates
+- Custom version input via interactive menu
+- Compatible with `.bumpversion.cfg` format
 
 Run `hanif bv --help` for the full guide.
 
@@ -100,7 +109,7 @@ bash tests/run-tests.sh
 
 ### Project Structure
 
-```
+```text
 bin/hanif              # Main CLI entry point
 lib/
   commands/            # Command handlers (git, squash, bumpversion, svg, help)

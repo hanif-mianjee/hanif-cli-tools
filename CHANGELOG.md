@@ -2,16 +2,22 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-12
+
 ### Added
-- Bumpversion command (`hanif bv` / `hanif bumpversion`) — bump2version-compatible version bumping
-- Interactive bump mode with preview menu showing all available bump types
+- Bumpversion command (`hanif bv` / `hanif bumpversion`) — semantic version bumping with RC workflow
+- Interactive bump mode with preview menu and custom version input
 - Direct bump subcommands: `patch`, `minor`, `major`, `rc`, `release`
-- Config initialization (`hanif bv init`) with auto-detection of project type
-- Migration support (`hanif bv migrate`) from bump2version and tbump
+- Config initialization (`hanif bv init`) with auto-detection of project type (Node.js, Python, Rust, Java, etc.)
 - RC (release candidate) workflow: all bumps produce RCs, explicit `release` to promote
-- Tag conflict detection with interactive resolution
-- Git commit and tag automation with push prompts
-- Comprehensive test suite for bumpversion command
+- Pre-flight verification of all files before any changes are applied
+- Tag conflict detection with interactive resolution (delete, suggest next, abort)
+- Git commit and tag automation with push prompts and failure detection
+- Automatic commit revert on tag conflict abort to prevent dirty history
+- Guards against invalid operations (`rc` on stable, `release` on non-rc)
+- Missing config auto-prompts to run `hanif bv init`
+- Config header with workflow docs and repo link
+- Comprehensive test suite for bumpversion command (61 tests)
 
 ## [0.2.2] - 2026-02-11
 
@@ -27,8 +33,6 @@
 - Updated README with detailed squash command result examples
 - Added `hanif amend` command to README documentation
 - Help topics now route git subcommands (e.g., `hanif help amend`) to git help page
-
-## [Unreleased]
 
 ### Added
 - Interactive commit squashing command (`hanif squash [count]`)
