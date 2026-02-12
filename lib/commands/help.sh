@@ -22,6 +22,11 @@ show_help() {
       show_squash_help
       ;;
 
+    bumpversion|bv)
+      source "${COMMANDS_DIR}/bumpversion.sh"
+      show_bumpversion_help
+      ;;
+
     svg)
       source "${COMMANDS_DIR}/svg.sh"
       show_svg_help
@@ -67,6 +72,7 @@ GIT COMMANDS
   squash [count]       Interactive commit squashing (default: 20)
 
 OTHER COMMANDS
+  bv [subcommand]      Version bumping (bump2version compatible)
   svg <subcommand>     SVG to PNG conversion
   self-update          Update Hanif CLI to latest version
   help [topic]         Show help

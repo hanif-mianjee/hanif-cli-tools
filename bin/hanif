@@ -94,6 +94,12 @@ main() {
       squash_command "$@"
       ;;
 
+    bumpversion|bv)
+      # shellcheck source=../lib/commands/bumpversion.sh
+      source "${COMMANDS_DIR}/bumpversion.sh"
+      bumpversion_command "$@"
+      ;;
+
     svg)
       # shellcheck source=../lib/commands/svg.sh
       source "${COMMANDS_DIR}/svg.sh"
@@ -148,6 +154,7 @@ Git Commands:
   squash [count]      Interactive commit squashing (default: 20)
 
 Other Commands:
+  bv [subcommand]     Version bumping (bump2version compatible)
   svg <subcommand>    SVG to PNG conversion
   self-update         Update Hanif CLI to latest version
   help [command]      Show help
