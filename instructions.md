@@ -47,3 +47,14 @@ replace = version = "{new_version}"
 search = "{current_version}"
 replace = "{new_version}"
 ```
+
+
+- Git revert is not working as expected. It did not reverted the commit                                                                                                                                  
+  - with current stable or release version 1.12.3, hanif bv rc is creating 1.12.3-rc0. It should show a warning that current version is a stable virsion that can not promoted to rc. try patch, minor,    
+  major, or custom                                                                                                                                                                                         
+  - why the options list does not shows option for custom and ask user to enter the version number?                                                                                                        
+  - - what are commit = True and tag = True in config file? Are these used anywhere? If not, please use them                                                                                               
+  - If it has already detected the version, it should use it and do not ask user.                                                                                                                          
+  - when error "Search pattern not found in" why it changed the remaining files and committed and created tag? it should verify everything then start updating the files and commit etc.                   
+  - "Config file not found: .bumpversion.cfg" should prompt user to init                                                                                                                                   
+  - in the config template, can we add the info about that the versioning is handled via hanif cli tool, and also add a small help in the header? Is this a good idea?    

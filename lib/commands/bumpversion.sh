@@ -134,9 +134,12 @@ EXAMPLES
 TIPS
   • All bumps (patch/minor/major) produce RC versions by default
   • Use 'release' to promote an RC to a clean version
-  • Interactive mode shows previews for all available bump types
+  • Interactive mode shows previews and includes a custom version option
+  • The 'rc' command only works on RC versions (not stable releases)
+  • Set commit = False or tag = False in config to disable auto-commit/tag
   • Config format is backward-compatible with bump2version
   • Tag conflicts are detected and can be resolved interactively
+  • Missing config prompts to run 'hanif bv init' automatically
 
 EOF
 }

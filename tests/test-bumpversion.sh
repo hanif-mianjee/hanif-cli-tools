@@ -403,8 +403,9 @@ test_init_creates_config() {
 
   source "$FUNCTIONS_DIR/bumpversion-functions.sh"
 
-  # Run init with simulated input (use version, track files, no extra files)
-  echo -e "y\ny\nn" | bumpversion_init 2>&1 >/dev/null || true
+  # Run init with simulated input (track files, no extra files)
+  # No longer asks "Use this version?" — auto-uses detected version
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
 
   assert_file_exists "Config file created" ".bumpversion.cfg"
 
@@ -413,6 +414,7 @@ test_init_creates_config() {
   assert_contains "Config has version" "$config_content" "current_version"
   assert_contains "Config has parse regex" "$config_content" "parse"
   assert_contains "Config has serialize" "$config_content" "serialize"
+  assert_contains "Config has header comment" "$config_content" "Managed by Hanif CLI"
 
   teardown
 }
@@ -424,8 +426,8 @@ test_init_detects_package_json() {
 
   source "$FUNCTIONS_DIR/bumpversion-functions.sh"
 
-  # Auto-accept defaults
-  echo -e "y\ny\nn" | bumpversion_init 2>&1 >/dev/null || true
+  # Auto-accept defaults (track files, no extra files)
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
 
   local config_content
   config_content=$(cat .bumpversion.cfg)
@@ -445,11 +447,27 @@ EOF
 
   source "$FUNCTIONS_DIR/bumpversion-functions.sh"
 
-  echo -e "y\ny\nn" | bumpversion_init 2>&1 >/dev/null || true
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
 
   local config_content
   config_content=$(cat .bumpversion.cfg)
   assert_contains "Config tracks pyproject.toml" "$config_content" "pyproject.toml"
+
+  teardown
+}
+
+test_init_auto_uses_detected_version() {
+  setup
+
+  echo '{"version": "5.1.2"}' > package.json
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
+
+  local config_content
+  config_content=$(cat .bumpversion.cfg)
+  assert_contains "Auto-used detected version" "$config_content" "current_version = 5.1.2"
 
   teardown
 }
@@ -556,6 +574,97 @@ EOF
   teardown
 }
 
+test_rc_blocked_on_stable_version() {
+  setup
+
+  cat > .bumpversion.cfg << 'EOF'
+[bumpversion]
+current_version = 1.2.3
+parse = (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-(?P<release>rc)(?P<rc>\d+))?
+serialize =
+  {major}.{minor}.{patch}-{release}{rc}
+  {major}.{minor}.{patch}
+
+[bumpversion:part:release]
+optional_value = ga
+values =
+  rc
+  ga
+
+[bumpversion:part:rc]
+first_value = 0
+EOF
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+
+  local output
+  output=$(bump_version "rc" 2>&1) || true
+  assert_contains "RC blocked on stable" "$output" "stable release"
+
+  teardown
+}
+
+test_release_blocked_on_stable_version() {
+  setup
+
+  cat > .bumpversion.cfg << 'EOF'
+[bumpversion]
+current_version = 1.2.3
+parse = (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-(?P<release>rc)(?P<rc>\d+))?
+serialize =
+  {major}.{minor}.{patch}-{release}{rc}
+  {major}.{minor}.{patch}
+
+[bumpversion:part:release]
+optional_value = ga
+values =
+  rc
+  ga
+
+[bumpversion:part:rc]
+first_value = 0
+EOF
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+
+  local output
+  output=$(bump_version "release" 2>&1) || true
+  assert_contains "Release blocked on stable" "$output" "already a stable release"
+
+  teardown
+}
+
+test_verify_files_catches_missing_pattern() {
+  setup
+
+  echo "no version here" > test_file.txt
+  cat > .bumpversion.cfg << 'EOF'
+[bumpversion]
+current_version = 1.0.0
+parse = (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-(?P<release>rc)(?P<rc>\d+))?
+serialize =
+  {major}.{minor}.{patch}-{release}{rc}
+  {major}.{minor}.{patch}
+
+[bumpversion:part:release]
+optional_value = ga
+
+[bumpversion:part:rc]
+first_value = 0
+
+[bumpversion:file:test_file.txt]
+EOF
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+  parse_bumpversion_config
+
+  local result=0
+  _bv_verify_files "1.0.0" 2>&1 >/dev/null || result=$?
+  assert_equals "Verify catches missing pattern" "1" "$result"
+
+  teardown
+}
+
 test_default_commit_message() {
   setup
 
@@ -570,7 +679,7 @@ test_default_commit_message() {
   # When commit_message is empty, bump_commit_and_tag uses the fallback
   # Test the init-generated config
   echo '{"version": "1.0.0"}' > package.json
-  echo -e "y\ny\nn" | bumpversion_init 2>&1 >/dev/null || true
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
 
   local config_content
   config_content=$(cat .bumpversion.cfg)
@@ -655,9 +764,17 @@ run_test test_file_update
 run_test test_init_creates_config
 run_test test_init_detects_package_json
 run_test test_init_detects_pyproject_toml
+run_test test_init_auto_uses_detected_version
 
 # Tag conflict
 run_test test_tag_conflict_detection
+
+# RC/release guards
+run_test test_rc_blocked_on_stable_version
+run_test test_release_blocked_on_stable_version
+
+# File verification
+run_test test_verify_files_catches_missing_pattern
 
 # Commit revert
 run_test test_revert_bump_commit_on_tag_abort

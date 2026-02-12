@@ -92,7 +92,16 @@ parse_bumpversion_config() {
 
   if [[ ! -f "$config_file" ]]; then
     error "Config file not found: $config_file"
-    return 1
+    if confirm "Initialize bumpversion config now?"; then
+      bumpversion_init
+      # Re-check if config was created
+      if [[ ! -f "$config_file" ]]; then
+        return 1
+      fi
+    else
+      info "Run 'hanif bv init' to create a config"
+      return 1
+    fi
   fi
 
   # Reset state
@@ -387,6 +396,49 @@ calculate_next_version() {
 }
 
 # ─────────────────────────────────────────────
+# File Verification (pre-flight check)
+# ─────────────────────────────────────────────
+
+_bv_verify_files() {
+  local current_version="$1"
+  local config_file="${2:-.bumpversion.cfg}"
+  local has_errors=false
+
+  local idx=0
+  for file in $BV_FILE_LIST; do
+    [[ -z "$file" ]] && continue
+
+    if [[ ! -f "$file" ]]; then
+      warning "File not found: $file"
+      idx=$((idx + 1))
+      continue
+    fi
+
+    local search
+    search=$(_bv_get_file_prop "$idx" "search")
+    search="${search:-{current_version\}}"
+    search=$(echo "$search" | sed "s/{current_version}/${current_version}/g")
+
+    if ! grep -qF "$search" "$file"; then
+      # Fallback: try plain version string
+      if ! grep -qF "$current_version" "$file"; then
+        error "Search pattern not found in $file: $search"
+        has_errors=true
+      fi
+    fi
+
+    idx=$((idx + 1))
+  done
+
+  if [[ "$has_errors" == true ]]; then
+    error "Pre-flight check failed. No files were modified."
+    return 1
+  fi
+
+  return 0
+}
+
+# ─────────────────────────────────────────────
 # File Updater
 # ─────────────────────────────────────────────
 
@@ -554,8 +606,8 @@ bump_commit_and_tag() {
 
   if [[ "$(_bv_to_lower "$do_tag")" == "true" ]]; then
     if check_tag_exists "$tag_name"; then
-      handle_tag_conflict "$tag_name" "$new_version"
-      local conflict_result=$?
+      local conflict_result=0
+      handle_tag_conflict "$tag_name" "$new_version" || conflict_result=$?
       if [[ $conflict_result -eq 1 ]] || [[ $conflict_result -eq 2 ]]; then
         # Revert the bump commit if we created one
         _bv_revert_bump_commit "$bump_commit_created" "$bump_commit_sha" "$current_version" "$config_file"
@@ -641,11 +693,40 @@ bump_version() {
 
   parse_version "$current_version" || return 1
 
+  # Block rc bump on stable versions
+  if [[ "$bump_type" == "rc" ]]; then
+    local current_release release_optional
+    current_release=$(_bv_get_vp "release")
+    release_optional=$(_bv_get_part "release" "optional_value")
+    if [[ -z "$current_release" || "$current_release" == "$release_optional" ]]; then
+      error "Current version $current_version is a stable release — cannot promote to rc."
+      info "Use one of: patch, minor, major, or custom"
+      echo "  hanif bv patch    # $current_version → next patch rc"
+      echo "  hanif bv minor    # $current_version → next minor rc"
+      echo "  hanif bv major    # $current_version → next major rc"
+      return 1
+    fi
+  fi
+
+  # Block release bump on non-rc versions
+  if [[ "$bump_type" == "release" ]]; then
+    local current_release release_optional
+    current_release=$(_bv_get_vp "release")
+    release_optional=$(_bv_get_part "release" "optional_value")
+    if [[ -z "$current_release" || "$current_release" == "$release_optional" ]]; then
+      error "Current version $current_version is already a stable release."
+      return 1
+    fi
+  fi
+
   local new_version
   new_version=$(calculate_next_version "$bump_type") || return 1
 
   info "Bumping version: $current_version → $new_version"
   echo ""
+
+  # Verify all files before updating any
+  _bv_verify_files "$current_version" "$config_file" || return 1
 
   update_version_files "$current_version" "$new_version" "$config_file"
 
@@ -742,6 +823,12 @@ interactive_bump() {
     fi
   fi
 
+  # Custom option (always available)
+  option_count=$((option_count + 1))
+  option_types="${option_types}custom "
+  option_previews="${option_previews}custom "
+  printf "  %d) %-9s (enter version manually)\n" "$option_count" "custom"
+
   echo ""
 
   # Convert space-separated lists to arrays for indexing
@@ -754,16 +841,31 @@ interactive_bump() {
 
     if echo "$choice" | grep -Eq "^[0-9]+$" && [[ "$choice" -ge 1 ]] && [[ "$choice" -le "$option_count" ]]; then
       local selected_type="${types_arr[$((choice - 1))]}"
-      local selected_preview="${previews_arr[$((choice - 1))]}"
-
-      echo ""
-      info "Bumping: $current_version → $selected_preview ($selected_type)"
-      echo ""
-
-      # Re-parse and calculate
-      parse_version "$current_version" || return 1
       local new_version
-      new_version=$(calculate_next_version "$selected_type") || return 1
+
+      if [[ "$selected_type" == "custom" ]]; then
+        printf "Enter new version: "
+        read -r new_version
+        if [[ -z "$new_version" ]]; then
+          warning "No version entered. Aborted."
+          return 1
+        fi
+        echo ""
+        info "Bumping: $current_version → $new_version (custom)"
+      else
+        local selected_preview="${previews_arr[$((choice - 1))]}"
+        echo ""
+        info "Bumping: $current_version → $selected_preview ($selected_type)"
+
+        # Re-parse and calculate
+        parse_version "$current_version" || return 1
+        new_version=$(calculate_next_version "$selected_type") || return 1
+      fi
+
+      echo ""
+
+      # Verify all files before updating any
+      _bv_verify_files "$current_version" "$config_file" || return 1
 
       update_version_files "$current_version" "$new_version" "$config_file"
 
@@ -872,7 +974,7 @@ bumpversion_init() {
     fi
   fi
 
-  # Prompt for version if not detected
+  # Use detected version or prompt for one
   if [[ -z "$detected_version" ]]; then
     printf "Enter current version (e.g., 0.1.0): "
     read -r detected_version
@@ -882,11 +984,7 @@ bumpversion_init() {
     fi
   else
     echo ""
-    info "Detected version: $detected_version"
-    if ! confirm "Use this version?"; then
-      printf "Enter current version: "
-      read -r detected_version
-    fi
+    info "Using detected version: $detected_version"
   fi
 
   # Ask which files to track
@@ -921,6 +1019,19 @@ bumpversion_init() {
 
   # Generate config
   cat > "$config_file" << EOF
+# Managed by Hanif CLI (hanif bv)
+# Docs: hanif bv --help
+#
+# Workflow: patch/minor/major → creates RC → rc to iterate → release to promote
+# Example: hanif bv patch → 1.0.1-rc0 → hanif bv rc → 1.0.1-rc1 → hanif bv release → 1.0.1
+#
+# commit: auto-commit version changes (True/False)
+# tag: auto-create git tag (True/False)
+# tag_name: tag template ({new_version} is replaced)
+# parse: regex to decompose version into parts
+# serialize: patterns to format version (first match wins)
+# commit_message: template for commit ({current_version}, {new_version} replaced)
+
 [bumpversion]
 current_version = ${detected_version}
 commit = True
@@ -1070,6 +1181,12 @@ migrate_from_tbump() {
   done < <(grep 'src[[:space:]]*=' "$config_file")
 
   cat > ".bumpversion.cfg" << EOF
+# Managed by Hanif CLI (hanif bv)
+# Docs: hanif bv --help
+#
+# Workflow: patch/minor/major → creates RC → rc to iterate → release to promote
+# Example: hanif bv patch → 1.0.1-rc0 → hanif bv rc → 1.0.1-rc1 → hanif bv release → 1.0.1
+
 [bumpversion]
 current_version = ${version}
 commit = True
