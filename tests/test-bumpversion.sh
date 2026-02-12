@@ -485,6 +485,101 @@ test_tag_conflict_detection() {
 }
 
 # ─────────────────────────────────────────────
+# Commit revert on tag conflict tests
+# ─────────────────────────────────────────────
+
+test_revert_bump_commit_on_tag_abort() {
+  setup
+
+  git init >/dev/null 2>&1
+  git config user.email "test@example.com"
+  git config user.name "Test User"
+
+  # Create initial commit with version file
+  echo "version='1.0.0'" > setup.py
+  cat > .bumpversion.cfg << 'EOF'
+[bumpversion]
+current_version = 1.0.0
+commit = True
+tag = True
+tag_name = v{new_version}
+parse = (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-(?P<release>rc)(?P<rc>\d+))?
+serialize =
+  {major}.{minor}.{patch}-{release}{rc}
+  {major}.{minor}.{patch}
+commit_message = Bump version: {current_version} → {new_version}
+
+[bumpversion:part:release]
+optional_value = ga
+values =
+  rc
+  ga
+
+[bumpversion:part:rc]
+first_value = 0
+
+[bumpversion:file:setup.py]
+EOF
+
+  git add .
+  git commit -m "Initial commit" >/dev/null 2>&1
+
+  # Create conflicting tag
+  git tag -a "v1.0.1-rc0" -m "v1.0.1-rc0"
+
+  local initial_sha
+  initial_sha=$(git rev-parse HEAD)
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+  parse_bumpversion_config
+  parse_version "1.0.0"
+
+  local new_version
+  new_version=$(calculate_next_version "patch")
+
+  # Update files (this simulates what bump_version does)
+  update_version_files "1.0.0" "$new_version"
+
+  # Run commit and tag, selecting abort (option 3) for tag conflict
+  echo "3" | bump_commit_and_tag "1.0.0" "$new_version" 2>&1 >/dev/null || true
+
+  # After abort, HEAD should be back to initial commit
+  local final_sha
+  final_sha=$(git rev-parse HEAD)
+  assert_equals "HEAD reverted to pre-bump commit" "$initial_sha" "$final_sha"
+
+  # Version file should be restored
+  local setup_content
+  setup_content=$(cat setup.py)
+  assert_contains "setup.py restored to original version" "$setup_content" "1.0.0"
+
+  teardown
+}
+
+test_default_commit_message() {
+  setup
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+
+  # Test that default commit_message uses the right pattern
+  # (not "chore: release version" but "Bump version: X → Y")
+  _bv_set_config "commit_message" ""
+  # After reset, the default should kick in
+  local default_msg
+  default_msg=$(_bv_get_config "commit_message")
+  # When commit_message is empty, bump_commit_and_tag uses the fallback
+  # Test the init-generated config
+  echo '{"version": "1.0.0"}' > package.json
+  echo -e "y\ny\nn" | bumpversion_init 2>&1 >/dev/null || true
+
+  local config_content
+  config_content=$(cat .bumpversion.cfg)
+  assert_contains "Init uses correct commit message pattern" "$config_content" "Bump version: {current_version}"
+
+  teardown
+}
+
+# ─────────────────────────────────────────────
 # Integration tests (main CLI)
 # ─────────────────────────────────────────────
 
@@ -563,6 +658,10 @@ run_test test_init_detects_pyproject_toml
 
 # Tag conflict
 run_test test_tag_conflict_detection
+
+# Commit revert
+run_test test_revert_bump_commit_on_tag_abort
+run_test test_default_commit_message
 
 # Integration
 run_test test_help_bumpversion_topic

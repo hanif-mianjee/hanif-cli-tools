@@ -536,6 +536,10 @@ bump_commit_and_tag() {
   local tag_name
   tag_name=$(echo "$tag_template" | sed "s/{current_version}/${current_version}/g; s/{new_version}/${new_version}/g")
 
+  # Track whether we created a bump commit (so we can safely revert it)
+  local bump_commit_created=false
+  local bump_commit_sha=""
+
   if [[ "$(_bv_to_lower "$do_commit")" == "true" ]]; then
     for file in $BV_FILE_LIST; do
       [[ -n "$file" && -f "$file" ]] && git add "$file"
@@ -543,6 +547,8 @@ bump_commit_and_tag() {
     git add "$config_file"
 
     git commit -m "$commit_msg"
+    bump_commit_created=true
+    bump_commit_sha=$(git rev-parse HEAD)
     success "Committed: $commit_msg"
   fi
 
@@ -550,10 +556,12 @@ bump_commit_and_tag() {
     if check_tag_exists "$tag_name"; then
       handle_tag_conflict "$tag_name" "$new_version"
       local conflict_result=$?
-      if [[ $conflict_result -eq 1 ]]; then
-        return 1
-      elif [[ $conflict_result -eq 2 ]]; then
-        warning "Please re-run with the suggested version"
+      if [[ $conflict_result -eq 1 ]] || [[ $conflict_result -eq 2 ]]; then
+        # Revert the bump commit if we created one
+        _bv_revert_bump_commit "$bump_commit_created" "$bump_commit_sha" "$current_version" "$config_file"
+        if [[ $conflict_result -eq 2 ]]; then
+          warning "Please re-run with the suggested version"
+        fi
         return 1
       fi
     fi
@@ -564,14 +572,54 @@ bump_commit_and_tag() {
 
   echo ""
   if confirm "Push commit and tag to remote?"; then
-    git push && git push --tags
-    success "Pushed to remote"
+    local push_failed=false
+    if ! git push 2>&1; then
+      push_failed=true
+    fi
+    if ! git push --tags 2>&1; then
+      push_failed=true
+    fi
+
+    if [[ "$push_failed" == true ]]; then
+      error "Push failed! Your commit and tag are local only."
+      info "Fix the issue and push manually:"
+      echo "  git push --follow-tags"
+      return 1
+    else
+      success "Pushed to remote"
+    fi
   else
     info "To push later, run:"
     echo "  git push --follow-tags"
   fi
 
   return 0
+}
+
+# Safely revert a bump commit we just created
+# Only reverts if we confirm the HEAD commit is the one we made
+_bv_revert_bump_commit() {
+  local was_created="$1"
+  local expected_sha="$2"
+
+  if [[ "$was_created" != true ]]; then
+    return 0
+  fi
+
+  # Safety check: only revert if HEAD is still the commit we created
+  local current_head
+  current_head=$(git rev-parse HEAD)
+  if [[ "$current_head" != "$expected_sha" ]]; then
+    warning "HEAD has changed since bump commit was created. Not reverting."
+    warning "You may need to manually revert commit $expected_sha"
+    return 1
+  fi
+
+  info "Reverting bump commit..."
+  # Use --hard to undo the commit and restore all files to pre-bump state
+  # Safe because we verified HEAD is exactly the bump commit we just created
+  git reset --hard HEAD~1 >/dev/null 2>&1
+  success "Bump commit reverted, working directory restored"
 }
 
 # ─────────────────────────────────────────────
@@ -598,11 +646,6 @@ bump_version() {
 
   info "Bumping version: $current_version → $new_version"
   echo ""
-
-  if ! confirm "Proceed with version bump?"; then
-    info "Aborted"
-    return 0
-  fi
 
   update_version_files "$current_version" "$new_version" "$config_file"
 
@@ -637,63 +680,65 @@ interactive_bump() {
   info "Current version: $current_version"
   echo ""
 
+  # Determine if current version is an RC
+  local current_release release_optional is_rc
+  current_release=$(_bv_get_vp "release")
+  release_optional=$(_bv_get_part "release" "optional_value")
+  is_rc=false
+  if [[ -n "$current_release" && "$current_release" != "$release_optional" ]]; then
+    is_rc=true
+  fi
+
   # Calculate previews for each bump type
   local option_count=0
   local option_types=""
   local option_previews=""
 
-  # RC option
-  local rc_preview
-  if rc_preview=$(calculate_next_version "rc" 2>/dev/null); then
-    parse_version "$current_version" >/dev/null 2>&1  # re-parse after calculate mutates state
+  # Helper: add an option to the menu
+  _add_option() {
+    local type_name="$1" preview="$2" label="$3"
     option_count=$((option_count + 1))
-    option_types="${option_types}rc "
-    option_previews="${option_previews}${rc_preview} "
-    echo "  ${option_count}) rc       ($current_version → $rc_preview)"
+    option_types="${option_types}${type_name} "
+    option_previews="${option_previews}${preview} "
+    printf "  %d) %-9s (%s → %s)\n" "$option_count" "$label" "$current_version" "$preview"
+  }
+
+  # RC option (only if currently IS an rc — increment rc number)
+  if [[ "$is_rc" == true ]]; then
+    local rc_preview
+    if rc_preview=$(calculate_next_version "rc" 2>/dev/null); then
+      parse_version "$current_version" >/dev/null 2>&1
+      _add_option "rc" "$rc_preview" "rc"
+    fi
   fi
 
   # Patch option
   local patch_preview
   if patch_preview=$(calculate_next_version "patch" 2>/dev/null); then
     parse_version "$current_version" >/dev/null 2>&1
-    option_count=$((option_count + 1))
-    option_types="${option_types}patch "
-    option_previews="${option_previews}${patch_preview} "
-    echo "  ${option_count}) patch    ($current_version → $patch_preview)"
+    _add_option "patch" "$patch_preview" "patch"
   fi
 
   # Minor option
   local minor_preview
   if minor_preview=$(calculate_next_version "minor" 2>/dev/null); then
     parse_version "$current_version" >/dev/null 2>&1
-    option_count=$((option_count + 1))
-    option_types="${option_types}minor "
-    option_previews="${option_previews}${minor_preview} "
-    echo "  ${option_count}) minor    ($current_version → $minor_preview)"
+    _add_option "minor" "$minor_preview" "minor"
   fi
 
   # Major option
   local major_preview
   if major_preview=$(calculate_next_version "major" 2>/dev/null); then
     parse_version "$current_version" >/dev/null 2>&1
-    option_count=$((option_count + 1))
-    option_types="${option_types}major "
-    option_previews="${option_previews}${major_preview} "
-    echo "  ${option_count}) major    ($current_version → $major_preview)"
+    _add_option "major" "$major_preview" "major"
   fi
 
-  # Release option (only if in pre-release)
-  local current_release release_optional
-  current_release=$(_bv_get_vp "release")
-  release_optional=$(_bv_get_part "release" "optional_value")
-  if [[ -n "$current_release" && "$current_release" != "$release_optional" ]]; then
+  # Release option (only if currently IS an rc — promote to clean version)
+  if [[ "$is_rc" == true ]]; then
     local release_preview
     if release_preview=$(calculate_next_version "release" 2>/dev/null); then
       parse_version "$current_version" >/dev/null 2>&1
-      option_count=$((option_count + 1))
-      option_types="${option_types}release "
-      option_previews="${option_previews}${release_preview} "
-      echo "  ${option_count}) release  ($current_version → $release_preview)"
+      _add_option "release" "$release_preview" "release"
     fi
   fi
 
@@ -714,11 +759,6 @@ interactive_bump() {
       echo ""
       info "Bumping: $current_version → $selected_preview ($selected_type)"
       echo ""
-
-      if ! confirm "Proceed with version bump?"; then
-        info "Aborted"
-        return 0
-      fi
 
       # Re-parse and calculate
       parse_version "$current_version" || return 1
@@ -869,11 +909,12 @@ bumpversion_init() {
       printf "File path (empty to finish): "
       read -r extra_file
       [[ -z "$extra_file" ]] && break
+      detected_files="${detected_files} ${extra_file}"
+      detected_count=$((detected_count + 1))
       if [[ -f "$extra_file" ]]; then
-        detected_files="${detected_files} ${extra_file}"
-        detected_count=$((detected_count + 1))
+        info "Added: $extra_file"
       else
-        warning "File not found: $extra_file"
+        warning "File does not exist yet: $extra_file (will be tracked anyway)"
       fi
     done
   fi
@@ -889,7 +930,7 @@ parse = (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-(?P<release>rc)(?P<rc>\d
 serialize =
   {major}.{minor}.{patch}-{release}{rc}
   {major}.{minor}.{patch}
-commit_message = chore: release version {new_version}
+commit_message = Bump version: {current_version} → {new_version}
 
 [bumpversion:part:release]
 optional_value = ga
@@ -1038,7 +1079,7 @@ parse = (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-(?P<release>rc)(?P<rc>\d
 serialize =
   {major}.{minor}.{patch}-{release}{rc}
   {major}.{minor}.{patch}
-commit_message = chore: release version {new_version}
+commit_message = Bump version: {current_version} → {new_version}
 
 [bumpversion:part:release]
 optional_value = ga
