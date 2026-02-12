@@ -15,7 +15,7 @@ set -euo pipefail
 # Version parts stored as BV_VP_<partname> variables
 
 BV_FILE_COUNT=0
-BV_FILE_LIST=""          # space-separated list of file paths
+BV_FILE_LIST=""          # newline-separated list of file paths
 BV_SERIALIZE_COUNT=0
 BV_SERIALIZE_LIST=""     # newline-separated serialize patterns
 BV_PART_LIST=""          # space-separated list of part names
@@ -135,7 +135,11 @@ parse_bumpversion_config() {
         current_file="${BASH_REMATCH[1]}"
         current_file_idx=$BV_FILE_COUNT
         _bv_set_file_prop "$current_file_idx" "path" "$current_file"
-        BV_FILE_LIST="${BV_FILE_LIST} ${current_file}"
+        if [[ -n "$BV_FILE_LIST" ]]; then
+          BV_FILE_LIST="${BV_FILE_LIST}"$'\n'"${current_file}"
+        else
+          BV_FILE_LIST="${current_file}"
+        fi
         BV_FILE_COUNT=$((BV_FILE_COUNT + 1))
       fi
       continue
@@ -162,12 +166,23 @@ parse_bumpversion_config() {
         safe_key=$(_bv_sanitize_key "$key")
         _bv_set_file_prop "$current_file_idx" "$safe_key" "$value"
       fi
-    # Handle continuation lines (indented values, like serialize patterns)
-    elif [[ "$current_section" == "bumpversion" && -n "$line" && "$line" != *"="* ]]; then
-      # Check if this looks like a serialize continuation
-      if [[ "$line" =~ ^\{.+ ]]; then
-        BV_SERIALIZE_LIST="${BV_SERIALIZE_LIST}${line}"$'\n'
-        BV_SERIALIZE_COUNT=$((BV_SERIALIZE_COUNT + 1))
+    # Handle continuation lines (indented values, like serialize patterns or part values)
+    elif [[ -n "$line" && "$line" != *"="* ]]; then
+      if [[ "$current_section" == "bumpversion" ]]; then
+        # Serialize continuation (lines starting with {)
+        if [[ "$line" =~ ^\{.+ ]]; then
+          BV_SERIALIZE_LIST="${BV_SERIALIZE_LIST}${line}"$'\n'
+          BV_SERIALIZE_COUNT=$((BV_SERIALIZE_COUNT + 1))
+        fi
+      elif [[ -n "$current_part" ]]; then
+        # Part values continuation (e.g., rc, ga under values =)
+        local existing_values
+        existing_values=$(_bv_get_part "$current_part" "values")
+        if [[ -n "$existing_values" ]]; then
+          _bv_set_part "$current_part" "values" "${existing_values},${line}"
+        else
+          _bv_set_part "$current_part" "values" "$line"
+        fi
       fi
     fi
   done < "$config_file"
@@ -402,7 +417,7 @@ _bv_verify_files() {
   local has_errors=false
 
   local idx=0
-  for file in $BV_FILE_LIST; do
+  while IFS= read -r file; do
     [[ -z "$file" ]] && continue
 
     if [[ ! -f "$file" ]]; then
@@ -427,7 +442,7 @@ _bv_verify_files() {
     fi
 
     idx=$((idx + 1))
-  done
+  done <<< "$BV_FILE_LIST"
 
   if [[ "$has_errors" == true ]]; then
     error "Pre-flight check failed. No files were modified."
@@ -447,7 +462,7 @@ update_version_files() {
   local config_file="${3:-.bumpversion.cfg}"
 
   local idx=0
-  for file in $BV_FILE_LIST; do
+  while IFS= read -r file; do
     [[ -z "$file" ]] && continue
 
     if [[ ! -f "$file" ]]; then
@@ -473,27 +488,17 @@ update_version_files() {
     replace=$(echo "$replace" | sed "s/{current_version}/${current_version}/g; s/{new_version}/${new_version}/g")
 
     if grep -qF "$search" "$file"; then
-      # Use a different delimiter for sed to avoid issues with / in versions
       local search_escaped replace_escaped
       search_escaped=$(printf '%s\n' "$search" | sed 's/[&/\]/\\&/g; s/[][(){}.*+?^$|\\]/\\&/g')
       replace_escaped=$(printf '%s\n' "$replace" | sed 's/[&/\]/\\&/g')
       sed_inplace "s/${search_escaped}/${replace_escaped}/g" "$file"
       info "Updated $file"
     else
-      # If no custom search pattern, try simple version replacement
-      if grep -qF "$current_version" "$file"; then
-        local cv_esc nv_esc
-        cv_esc=$(printf '%s\n' "$current_version" | sed 's/[&/\]/\\&/g; s/[][(){}.*+?^$|\\]/\\&/g')
-        nv_esc=$(printf '%s\n' "$new_version" | sed 's/[&/\]/\\&/g')
-        sed_inplace "s/${cv_esc}/${nv_esc}/g" "$file"
-        info "Updated $file"
-      else
-        warning "Search pattern not found in $file: $search"
-      fi
+      warning "Search pattern not found in $file: $search"
     fi
 
     idx=$((idx + 1))
-  done
+  done <<< "$BV_FILE_LIST"
 
   # Update .bumpversion.cfg itself
   if [[ -f "$config_file" ]]; then
@@ -582,8 +587,12 @@ bump_commit_and_tag() {
 
   do_commit="${do_commit:-True}"
   do_tag="${do_tag:-True}"
-  tag_template="${tag_template:-v{new_version\}}"
-  msg_template="${msg_template:-Bump version: {current_version\} → {new_version\}}"
+  if [[ -z "$tag_template" ]]; then
+    tag_template="v{new_version}"
+  fi
+  if [[ -z "$msg_template" ]]; then
+    msg_template="Bump version: {current_version} → {new_version}"
+  fi
 
   # Interpolate templates
   local commit_msg
@@ -596,12 +605,15 @@ bump_commit_and_tag() {
   local bump_commit_sha=""
 
   if [[ "$(_bv_to_lower "$do_commit")" == "true" ]]; then
-    for file in $BV_FILE_LIST; do
+    while IFS= read -r file; do
       [[ -n "$file" && -f "$file" ]] && git add "$file"
-    done
+    done <<< "$BV_FILE_LIST"
     git add "$config_file"
 
-    git commit -m "$commit_msg"
+    if ! git commit -m "$commit_msg"; then
+      error "Git commit failed"
+      return 1
+    fi
     bump_commit_created=true
     bump_commit_sha=$(git rev-parse HEAD)
     success "Committed: $commit_msg"
@@ -613,7 +625,7 @@ bump_commit_and_tag() {
       handle_tag_conflict "$tag_name" "$new_version" || conflict_result=$?
       if [[ $conflict_result -eq 1 ]] || [[ $conflict_result -eq 2 ]]; then
         # Revert the bump commit if we created one
-        _bv_revert_bump_commit "$bump_commit_created" "$bump_commit_sha" "$current_version" "$config_file"
+        _bv_revert_bump_commit "$bump_commit_created" "$bump_commit_sha"
         if [[ $conflict_result -eq 2 ]]; then
           warning "Please re-run with the suggested version"
         fi
@@ -621,27 +633,41 @@ bump_commit_and_tag() {
       fi
     fi
 
-    git tag -a "$tag_name" -m "$commit_msg"
+    if ! git tag -a "$tag_name" -m "$commit_msg"; then
+      error "Git tag creation failed"
+      _bv_revert_bump_commit "$bump_commit_created" "$bump_commit_sha"
+      return 1
+    fi
     success "Tagged: $tag_name"
   fi
 
   echo ""
   if confirm "Push commit and tag to remote?"; then
-    local push_failed=false
-    if ! git push 2>&1; then
-      push_failed=true
+    local commit_pushed=false
+    local tags_pushed=false
+
+    if git push 2>&1; then
+      commit_pushed=true
     fi
-    if ! git push --tags 2>&1; then
-      push_failed=true
+    if git push --tags 2>&1; then
+      tags_pushed=true
     fi
 
-    if [[ "$push_failed" == true ]]; then
-      error "Push failed! Your commit and tag are local only."
+    if [[ "$commit_pushed" == true && "$tags_pushed" == true ]]; then
+      success "Pushed to remote"
+    elif [[ "$commit_pushed" == true && "$tags_pushed" == false ]]; then
+      warning "Commit pushed but tag push failed."
+      info "Push tags manually:"
+      echo "  git push --tags"
+    elif [[ "$commit_pushed" == false && "$tags_pushed" == true ]]; then
+      warning "Tags pushed but commit push failed."
+      info "Push commit manually:"
+      echo "  git push"
+    else
+      error "Push failed! Commit and tag are local only."
       info "Fix the issue and push manually:"
       echo "  git push --follow-tags"
       return 1
-    else
-      success "Pushed to remote"
     fi
   else
     info "To push later, run:"
@@ -851,6 +877,12 @@ interactive_bump() {
         read -r new_version
         if [[ -z "$new_version" ]]; then
           warning "No version entered. Aborted."
+          return 1
+        fi
+        # Validate: must look like semver (digits.digits.digits with optional suffix)
+        if ! echo "$new_version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+'; then
+          error "Invalid version format: $new_version"
+          info "Expected format: X.Y.Z or X.Y.Z-rc0"
           return 1
         fi
         echo ""
