@@ -60,6 +60,25 @@ Third commit
 
 Run `hanif squash --help` for the full guide.
 
+## Bumpversion Command
+
+Bump2version-compatible version bumping with RC release workflow:
+
+```bash
+hanif bv              # Interactive bump with preview menu
+hanif bv init         # Initialize .bumpversion.cfg for your project
+hanif bv patch        # 1.0.0 → 1.0.1-rc0
+hanif bv rc           # 1.0.1-rc0 → 1.0.1-rc1
+hanif bv release      # 1.0.1-rc1 → 1.0.1
+hanif bv minor        # 1.0.0 → 1.1.0-rc0
+hanif bv major        # 1.0.0 → 2.0.0-rc0
+hanif bv migrate      # Migrate from bump2version/tbump
+```
+
+**Workflow:** Initialize with `hanif bv init`, then use `patch`/`minor`/`major` to create RC versions, `rc` to iterate, and `release` to promote. Handles git commits, tags, and multi-file version updates automatically.
+
+Run `hanif bv --help` for the full guide.
+
 ## SVG Commands
 
 Convert SVG to PNG with auto-detected converters (librsvg, Inkscape, ImageMagick):
@@ -84,8 +103,8 @@ bash tests/run-tests.sh
 ```
 bin/hanif              # Main CLI entry point
 lib/
-  commands/            # Command handlers (git, squash, svg, help)
-  functions/           # Core logic (git-functions, squash-functions, svg-functions)
+  commands/            # Command handlers (git, squash, bumpversion, svg, help)
+  functions/           # Core logic (git-functions, squash-functions, bumpversion-functions, svg-functions)
   utils/common.sh      # Shared utilities (logging, git helpers)
 tests/                 # Test suites
 scripts/               # Build/install/publish scripts

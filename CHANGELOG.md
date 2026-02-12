@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Bumpversion command (`hanif bv` / `hanif bumpversion`) — bump2version-compatible version bumping
+- Interactive bump mode with preview menu showing all available bump types
+- Direct bump subcommands: `patch`, `minor`, `major`, `rc`, `release`
+- Config initialization (`hanif bv init`) with auto-detection of project type
+- Migration support (`hanif bv migrate`) from bump2version and tbump
+- RC (release candidate) workflow: all bumps produce RCs, explicit `release` to promote
+- Tag conflict detection with interactive resolution
+- Git commit and tag automation with push prompts
+- Comprehensive test suite for bumpversion command
+
 ## [0.2.2] - 2026-02-11
 
 ### Fixed
