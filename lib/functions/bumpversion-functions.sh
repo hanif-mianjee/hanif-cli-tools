@@ -466,7 +466,6 @@ update_version_files() {
     [[ -z "$file" ]] && continue
 
     if [[ ! -f "$file" ]]; then
-      warning "File not found, skipping: $file"
       idx=$((idx + 1))
       continue
     fi
@@ -643,26 +642,8 @@ bump_commit_and_tag() {
 
   echo ""
   if confirm "Push commit and tag to remote?"; then
-    local commit_pushed=false
-    local tags_pushed=false
-
-    if git push 2>&1; then
-      commit_pushed=true
-    fi
-    if git push --tags 2>&1; then
-      tags_pushed=true
-    fi
-
-    if [[ "$commit_pushed" == true && "$tags_pushed" == true ]]; then
+    if git push --follow-tags 2>&1; then
       success "Pushed to remote"
-    elif [[ "$commit_pushed" == true && "$tags_pushed" == false ]]; then
-      warning "Commit pushed but tag push failed."
-      info "Push tags manually:"
-      echo "  git push --tags"
-    elif [[ "$commit_pushed" == false && "$tags_pushed" == true ]]; then
-      warning "Tags pushed but commit push failed."
-      info "Push commit manually:"
-      echo "  git push"
     else
       error "Push failed! Commit and tag are local only."
       info "Fix the issue and push manually:"
@@ -933,13 +914,22 @@ bumpversion_init() {
   fi
 
   local detected_version=""
-  local detected_files=""
+  local detected_files=""  # newline-separated
   local detected_count=0
+
+  # Helper to append a file to the newline-separated list
+  _bv_add_detected_file() {
+    if [[ -n "$detected_files" ]]; then
+      detected_files="${detected_files}"$'\n'"$1"
+    else
+      detected_files="$1"
+    fi
+    detected_count=$((detected_count + 1))
+  }
 
   if [[ -f "package.json" ]]; then
     detected_version=$(grep -o '"version":[[:space:]]*"[^"]*"' package.json | head -1 | sed 's/.*"version":[[:space:]]*"//; s/"//')
-    detected_files="${detected_files} package.json"
-    detected_count=$((detected_count + 1))
+    _bv_add_detected_file "package.json"
     info "Detected Node.js project (package.json)"
   fi
 
@@ -948,8 +938,7 @@ bumpversion_init() {
     pyver=$(grep -E '^version[[:space:]]*=' pyproject.toml | head -1 | sed 's/.*=[[:space:]]*"//; s/".*//')
     if [[ -n "$pyver" ]]; then
       detected_version="${detected_version:-$pyver}"
-      detected_files="${detected_files} pyproject.toml"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "pyproject.toml"
       info "Detected Python project (pyproject.toml)"
     fi
   fi
@@ -959,8 +948,7 @@ bumpversion_init() {
     spver=$(grep -E "version[[:space:]]*=" setup.py | head -1 | sed "s/.*version[[:space:]]*=[[:space:]]*['\"]//; s/['\"].*//" )
     if [[ -n "$spver" ]]; then
       detected_version="${detected_version:-$spver}"
-      detected_files="${detected_files} setup.py"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "setup.py"
       info "Detected Python project (setup.py)"
     fi
   fi
@@ -970,8 +958,7 @@ bumpversion_init() {
     scver=$(grep -E '^version[[:space:]]*=' setup.cfg | head -1 | sed 's/.*=[[:space:]]*//')
     if [[ -n "$scver" ]]; then
       detected_version="${detected_version:-$scver}"
-      detected_files="${detected_files} setup.cfg"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "setup.cfg"
       info "Detected Python project (setup.cfg)"
     fi
   fi
@@ -981,8 +968,7 @@ bumpversion_init() {
     cver=$(grep -E '^version[[:space:]]*=' Cargo.toml | head -1 | sed 's/.*=[[:space:]]*"//; s/".*//')
     if [[ -n "$cver" ]]; then
       detected_version="${detected_version:-$cver}"
-      detected_files="${detected_files} Cargo.toml"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "Cargo.toml"
       info "Detected Rust project (Cargo.toml)"
     fi
   fi
@@ -992,8 +978,7 @@ bumpversion_init() {
     gver=$(grep -E "^version[[:space:]]*=" build.gradle | head -1 | sed "s/.*=[[:space:]]*['\"]//; s/['\"].*//" )
     if [[ -n "$gver" ]]; then
       detected_version="${detected_version:-$gver}"
-      detected_files="${detected_files} build.gradle"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "build.gradle"
       info "Detected Gradle project (build.gradle)"
     fi
   fi
@@ -1003,8 +988,7 @@ bumpversion_init() {
     pver=$(grep -m1 '<version>' pom.xml | sed 's/.*<version>//; s/<\/version>.*//')
     if [[ -n "$pver" ]]; then
       detected_version="${detected_version:-$pver}"
-      detected_files="${detected_files} pom.xml"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "pom.xml"
       info "Detected Maven project (pom.xml)"
     fi
   fi
@@ -1026,9 +1010,9 @@ bumpversion_init() {
   echo ""
   if [[ $detected_count -gt 0 ]]; then
     info "Detected files with version info:"
-    for f in $detected_files; do
+    while IFS= read -r f; do
       [[ -n "$f" ]] && echo "  - $f"
-    done
+    done <<< "$detected_files"
     echo ""
     if ! confirm "Track these files for version replacement?"; then
       detected_files=""
@@ -1042,8 +1026,7 @@ bumpversion_init() {
       printf "File path (empty to finish): "
       read -r extra_file
       [[ -z "$extra_file" ]] && break
-      detected_files="${detected_files} ${extra_file}"
-      detected_count=$((detected_count + 1))
+      _bv_add_detected_file "$extra_file"
       if [[ -f "$extra_file" ]]; then
         info "Added: $extra_file"
       else
@@ -1089,17 +1072,63 @@ values =
 first_value = 0
 EOF
 
-  # Add file sections
-  for file in $detected_files; do
-    [[ -z "$file" ]] && continue
-    echo "" >> "$config_file"
-    echo "[bumpversion:file:${file}]" >> "$config_file"
-  done
+  # Add file sections with appropriate search/replace patterns
+  if [[ -n "$detected_files" ]]; then
+    while IFS= read -r file; do
+      [[ -z "$file" ]] && continue
+      echo "" >> "$config_file"
+      echo "[bumpversion:file:${file}]" >> "$config_file"
+
+      # Generate search/replace based on file type
+      case "$file" in
+        pyproject.toml)
+          echo 'search = version = "{current_version}"' >> "$config_file"
+          echo 'replace = version = "{new_version}"' >> "$config_file"
+          ;;
+        setup.cfg)
+          echo 'search = version = {current_version}' >> "$config_file"
+          echo 'replace = version = {new_version}' >> "$config_file"
+          ;;
+        setup.py)
+          echo "search = version=\"{current_version}\"" >> "$config_file"
+          echo "replace = version=\"{new_version}\"" >> "$config_file"
+          ;;
+        package.json)
+          echo 'search = "version": "{current_version}"' >> "$config_file"
+          echo 'replace = "version": "{new_version}"' >> "$config_file"
+          ;;
+        Cargo.toml)
+          echo 'search = version = "{current_version}"' >> "$config_file"
+          echo 'replace = version = "{new_version}"' >> "$config_file"
+          ;;
+        build.gradle)
+          echo "search = version = '{current_version}'" >> "$config_file"
+          echo "replace = version = '{new_version}'" >> "$config_file"
+          ;;
+        pom.xml)
+          echo 'search = <version>{current_version}</version>' >> "$config_file"
+          echo 'replace = <version>{new_version}</version>' >> "$config_file"
+          ;;
+        *)
+          # For unknown files, use version string with quotes as default
+          echo 'search = {current_version}' >> "$config_file"
+          echo 'replace = {new_version}' >> "$config_file"
+          ;;
+      esac
+    done <<< "$detected_files"
+  fi
 
   echo ""
   success "Created $config_file"
   info "Current version: $detected_version"
-  info "Tracked files: ${detected_files:-none}"
+  if [[ -n "$detected_files" ]]; then
+    info "Tracked files:"
+    while IFS= read -r f; do
+      [[ -n "$f" ]] && echo "  - $f"
+    done <<< "$detected_files"
+  else
+    info "Tracked files: none"
+  fi
   echo ""
   info "Next steps:"
   echo "  hanif bv          # Interactive bump"

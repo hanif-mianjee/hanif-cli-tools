@@ -456,6 +456,44 @@ EOF
   teardown
 }
 
+test_init_generates_search_replace() {
+  setup
+
+  echo '{"version": "1.0.0"}' > package.json
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
+
+  local config_content
+  config_content=$(cat .bumpversion.cfg)
+  assert_contains "Init generates search for package.json" "$config_content" '"version": "{current_version}"'
+  assert_contains "Init generates replace for package.json" "$config_content" '"version": "{new_version}"'
+
+  teardown
+}
+
+test_init_generates_search_replace_pyproject() {
+  setup
+
+  cat > pyproject.toml << 'EOF'
+[project]
+name = "myproject"
+version = "0.5.0"
+EOF
+
+  source "$FUNCTIONS_DIR/bumpversion-functions.sh"
+
+  echo -e "y\nn" | bumpversion_init 2>&1 >/dev/null || true
+
+  local config_content
+  config_content=$(cat .bumpversion.cfg)
+  assert_contains "Init generates search for pyproject.toml" "$config_content" 'version = "{current_version}"'
+  assert_contains "Init generates replace for pyproject.toml" "$config_content" 'version = "{new_version}"'
+
+  teardown
+}
+
 test_init_auto_uses_detected_version() {
   setup
 
@@ -764,6 +802,8 @@ run_test test_file_update
 run_test test_init_creates_config
 run_test test_init_detects_package_json
 run_test test_init_detects_pyproject_toml
+run_test test_init_generates_search_replace
+run_test test_init_generates_search_replace_pyproject
 run_test test_init_auto_uses_detected_version
 
 # Tag conflict
