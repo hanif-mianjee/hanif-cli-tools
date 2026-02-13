@@ -135,7 +135,7 @@ verify_installation() {
   
   if command -v hanif >/dev/null 2>&1; then
     local version
-    version=$(hanif version 2>/dev/null || echo "unknown")
+    version=$(HANIF_SKIP_UPDATE_CHECK=1 hanif version 2>/dev/null || echo "unknown")
     success "Installation verified: $version"
     return 0
   else

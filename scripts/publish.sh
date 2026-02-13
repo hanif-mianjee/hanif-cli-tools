@@ -140,15 +140,20 @@ main() {
     sed_inplace "s/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-${new_version}-blue/" README.md
     success "Updated README.md badge"
 
-    # CHANGELOG.md - open for manual editing
-    if confirm "Open CHANGELOG.md to add release notes?"; then
-      ${EDITOR:-vim} CHANGELOG.md
+    # CHANGELOG.md - stamp [Unreleased] with version and date, add new empty Unreleased section
+    local today
+    today=$(date +%Y-%m-%d)
+    if grep -q '^\#\# \[Unreleased\]' CHANGELOG.md; then
+      sed_inplace "s/^## \[Unreleased\]/## [Unreleased]\\"$'\n'"\\"$'\n'"## [${new_version}] - ${today}/" CHANGELOG.md
+      success "Updated CHANGELOG.md with version ${new_version}"
+    else
+      warning "Could not find [Unreleased] section in CHANGELOG.md"
     fi
   fi
 
-  # 9. Build
+  # 9. Build (skip tests since we already ran them above)
   info "Running build..."
-  bash scripts/build.sh
+  SKIP_TESTS=1 bash scripts/build.sh
   success "Build complete"
 
   # 10. Review changes

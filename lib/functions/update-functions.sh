@@ -21,6 +21,8 @@ self_update() {
 
   if curl -fsSL "$INSTALL_SCRIPT_URL" | bash; then
     echo ""
+    # Clear stale update cache so "Update available!" isn't shown post-update
+    echo "up_to_date" > "${HOME}/.hanif-cli/.update-cache"
     # Re-source to pick up new version
     local new_version
     if [[ -f "${INSTALL_DIR}/bin/hanif" ]]; then

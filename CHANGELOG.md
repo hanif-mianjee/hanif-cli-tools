@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+- "Update available!" message no longer appears after `hanif self-update` completes
+- Install verification (`hanif version` during install) no longer triggers stale update notices
+
+### Changed
+- Publish script now automatically stamps CHANGELOG.md with version number and date instead of opening editor manually
+- Publish script no longer runs tests twice (skips duplicate test run in build step)
+
 ## [0.3.0] - 2026-02-12
 
 ### Added
