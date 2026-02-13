@@ -2,7 +2,7 @@
 
 > Personal productivity CLI for daily workflows
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/hanif-mianjee/hanif-cli-tools)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](https://github.com/hanif-mianjee/hanif-cli-tools)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Installation

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-13
+
 ### Fixed
 - "Update available!" message no longer appears after `hanif self-update` completes
 - Install verification (`hanif version` during install) no longer triggers stale update notices
