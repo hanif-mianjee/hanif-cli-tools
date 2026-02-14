@@ -76,6 +76,13 @@ git_command() {
       gitamend "$@"
       ;;
     
+    gitignore|gi)
+      case "${1:-}" in
+        help|--help|-h) show_git_help; return ;;
+      esac
+      gitignore_add "$@"
+      ;;
+    
     sync)
       # Full sync: update base branch, rebase current branch, clean old branches
       info "Starting full sync..."
@@ -132,6 +139,7 @@ Commands:
   amend ["message"]         Amend last commit with changes
   pull                     Fetch all + pull
   st, status               Git status
+  gi, gitignore <path>     Add to .gitignore & untrack
 
 Examples:
   hanif sync
@@ -205,6 +213,25 @@ AMEND
 
   hanif amend "updated message"
     → Stages all changes, amends with new message
+
+GITIGNORE (gi)
+  Add path to .gitignore and remove from git tracking
+  Files stay on disk — only removed from git index
+
+  hanif gi .env
+    → Adds .env to .gitignore, untracks it
+
+  hanif gi node_modules/
+    → Adds node_modules/ to .gitignore, untracks it
+
+  hanif gitignore "*.log"
+    → Adds *.log pattern to .gitignore, untracks matching files
+
+  Features:
+  • Creates .gitignore if it doesn't exist
+  • Prevents duplicate entries
+  • Removes from git index (keeps files on disk)
+  • Works with files, directories, and glob patterns
 
 PULL
   Fetch all remotes and pull

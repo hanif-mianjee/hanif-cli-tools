@@ -269,3 +269,51 @@ gitamend() {
 
   echo "✅ Amended last commit"
 }
+
+# gitignore - Add a path to .gitignore and remove it from git tracking
+# Usage: gitignore <path>
+# - Creates .gitignore if it doesn't exist
+# - Appends path to .gitignore (avoids duplicates)
+# - Removes path from git index (keeps file on disk)
+gitignore_add() {
+  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+
+  if [[ -z "${1:-}" ]]; then
+    echo "❌ Usage: hanif gi <path>"
+    echo "  Example: hanif gi .env"
+    echo "  Example: hanif gi node_modules/"
+    return 1
+  fi
+
+  local path="$1"
+
+  # Create .gitignore if it doesn't exist
+  if [[ ! -f .gitignore ]]; then
+    echo "ℹ️  Creating .gitignore file..."
+    touch .gitignore
+    echo "✅ Created .gitignore"
+  fi
+
+  # Check if path is already in .gitignore
+  if grep -qxF "$path" .gitignore 2>/dev/null; then
+    echo "⚠️  '$path' is already in .gitignore"
+  else
+    # Append path to .gitignore
+    echo "$path" >> .gitignore
+    echo "✅ Added '$path' to .gitignore"
+  fi
+
+  # Remove from git index (keep file on disk)
+  if git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+    echo "ℹ️  Removing '$path' from git index..."
+    git rm -r --cached "$path" >/dev/null 2>&1
+    echo "✅ Removed '$path' from git tracking (file kept on disk)"
+  else
+    echo "ℹ️  '$path' is not currently tracked by git"
+  fi
+
+  echo ""
+  echo "ℹ️  Next steps:"
+  echo "  1. Review changes: git status"
+  echo "  2. Commit: git commit -m \"Add $path to .gitignore\""
+}

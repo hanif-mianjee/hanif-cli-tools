@@ -23,6 +23,7 @@ hanif help
 | `hanif clean` | Delete branches removed from remote |
 | `hanif rb main` | Rebase onto branch |
 | `hanif squash [count]` | Interactive commit squashing (default: 20) |
+| `hanif gi <path>` | Add to .gitignore & remove from tracking |
 | `hanif svg convert ...` | SVG to PNG conversion |
 | `hanif help` | Show help |
 
@@ -42,6 +43,9 @@ hanif sync
 
 # Rebase current branch
 hanif rb main
+
+# Add file to .gitignore and untrack it
+hanif gi .env
 ```
 
 ## Add Your Own Commands

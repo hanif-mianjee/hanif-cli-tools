@@ -25,6 +25,8 @@ hanif pull                          # Fetch all + pull
 hanif st                            # Git status
 hanif amend                         # Amend last commit (keep message)
 hanif amend "new message"           # Amend last commit with new message
+hanif gi .env                       # Add .env to .gitignore & untrack
+hanif gi node_modules/              # Add node_modules/ to .gitignore & untrack
 ```
 
 Smart branch naming with `nf`:
@@ -59,6 +61,19 @@ Third commit
 ```
 
 Run `hanif squash --help` for the full guide.
+
+## Gitignore Command
+
+Add paths to `.gitignore` and remove them from git tracking in one step. Files stay on disk — only removed from the git index:
+
+```bash
+hanif gi .env                # Add .env to .gitignore & untrack
+hanif gi node_modules/       # Add node_modules/ to .gitignore & untrack
+hanif gi "*.log"             # Add *.log pattern to .gitignore & untrack
+hanif gitignore .DS_Store    # Full command name also works
+```
+
+Creates `.gitignore` if it doesn't exist. Skips duplicate entries. Run `hanif gi --help` for the full guide.
 
 ## Bumpversion Command
 

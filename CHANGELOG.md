@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+- Gitignore command (`hanif gitignore` / `hanif gi`) — add paths to .gitignore and remove from git tracking
+- Creates .gitignore if it doesn't exist
+- Prevents duplicate entries in .gitignore
+- Removes path from git index while keeping files on disk
+- Provides feedback and next-step guidance
+- Comprehensive test suite for gitignore command
+
 ## [0.3.1] - 2026-02-13
 
 ### Fixed
