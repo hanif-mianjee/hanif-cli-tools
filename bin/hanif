@@ -94,6 +94,11 @@ main() {
       squash_command "$@"
       ;;
 
+    gitignore|gi)
+      source "${COMMANDS_DIR}/git.sh"
+      git_command gi "$@"
+      ;;
+
     bumpversion|bv)
       # shellcheck source=../lib/commands/bumpversion.sh
       source "${COMMANDS_DIR}/bumpversion.sh"
@@ -152,6 +157,7 @@ Git Commands:
   st                  Git status
   amend ["message"]   Amend last commit with current changes
   squash [count]      Interactive commit squashing (default: 20)
+  gi <path>           Add to .gitignore & remove from tracking
 
 Other Commands:
   bv [subcommand]     Version bumping (bump2version compatible)

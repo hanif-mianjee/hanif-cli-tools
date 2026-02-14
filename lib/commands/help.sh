@@ -33,7 +33,7 @@ show_help() {
       ;;
 
     # Git subcommands route to git help
-    sync|nf|up|upall|clean|rb|pull|st|amend)
+    sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       source "${COMMANDS_DIR}/git.sh"
       show_git_help
       ;;
@@ -70,6 +70,7 @@ GIT COMMANDS
   st                   Git status
   amend ["message"]    Amend last commit with current changes
   squash [count]       Interactive commit squashing (default: 20)
+  gi <path>            Add to .gitignore & remove from tracking
 
 OTHER COMMANDS
   bv [subcommand]      Version bumping (bump2version compatible)
@@ -85,6 +86,7 @@ EXAMPLES
     → Creates: feature/jira-123_add_feature
   hanif squash 5
   hanif svg convert logo.svg 64,128,256
+  hanif gi .env
   hanif help git
 
 LEGACY
