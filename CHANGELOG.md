@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-14
+
 ### Added
 - Gitignore command (`hanif gitignore` / `hanif gi`) — add paths to .gitignore and remove from git tracking
 - Creates .gitignore if it doesn't exist
