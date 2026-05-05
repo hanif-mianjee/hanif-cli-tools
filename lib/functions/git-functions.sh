@@ -126,7 +126,7 @@ gitclean() {
 newfeature() {
   is_git_repo || { error "Not a git repository"; return 1; }
 
-  if [ -z "${1:-}" ]; then
+  if [[ -z "${1:-}" ]]; then
     error "Usage: newfeature <description>"
     hint "  newfeature add login form"
     hint "  newfeature \"TICKET-123: add login form\""
@@ -194,7 +194,7 @@ newfeature() {
 gitrebase() {
   is_git_repo || { error "Not a git repository"; return 1; }
 
-  if [ -z "${1:-}" ]; then
+  if [[ -z "${1:-}" ]]; then
     error "Usage: gitrebase <base-branch>"
     hint "  Example: gitrebase main"
     return 1

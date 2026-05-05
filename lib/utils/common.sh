@@ -39,6 +39,9 @@ _hanif_render() {
   local fd="$1"
   local s="$2"
   if [[ -n "${NO_COLOR:-}" || -n "${HANIF_NO_COLOR:-}" ]] || [[ ! -t "$fd" ]]; then
+    # Use sed to strip ANSI CSI sequences. Bash parameter expansion can't
+    # easily match this multi-character escape pattern (\033[...m), so sed
+    # is the clearest tool here.
     # shellcheck disable=SC2001
     printf '%b' "$s" | sed $'s/\033\\[[0-9;]*m//g'
   else
