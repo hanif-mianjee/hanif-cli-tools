@@ -237,6 +237,9 @@ _hanif_env_write() {
   fi
 
   # Drop existing line(s) for this KEY, keep everything else.
+  # `|| true` because grep -v returns 1 when no lines match (e.g. an empty
+  # managed file with only the header) — that's a successful "kept nothing
+  # to drop", not an error.
   grep -Ev "$pattern" "$file" > "$tmp" || true
   printf '%s\n' "$new_line" >> "$tmp"
 
@@ -388,12 +391,15 @@ hanif_env_set() {
 
   _hanif_env_ensure_file
 
-  # Check for overwrite.
-  local existing
-  existing=$(_hanif_env_get_value "$key" || true)
+  # Check for overwrite — read the line once, derive both flag and value
+  # from it so we don't hit the file three times for one decision.
+  local existing_line
+  existing_line=$(_hanif_env_get_line "$key" 2>/dev/null || true)
   local existed=0
-  if _hanif_env_get_line "$key" >/dev/null 2>&1 && [[ -n "$(_hanif_env_get_line "$key")" ]]; then
+  local existing=""
+  if [[ -n "$existing_line" ]]; then
     existed=1
+    existing=$(_hanif_env_get_value "$key" 2>/dev/null || true)
   fi
 
   print_banner "Persist Environment Variable"
@@ -447,11 +453,15 @@ hanif_env_unset() {
     return 1
   fi
 
-  local existing
-  if ! existing=$(_hanif_env_get_value "$key" 2>/dev/null) || [[ -z "$(_hanif_env_get_line "$key")" ]]; then
+  # Read the line once; bail early if the variable isn't in the file.
+  local existing_line
+  existing_line=$(_hanif_env_get_line "$key" 2>/dev/null || true)
+  if [[ -z "$existing_line" ]]; then
     warning "'$key' is not in the managed file — nothing to remove."
     return 0
   fi
+  local existing
+  existing=$(_hanif_env_get_value "$key" 2>/dev/null || true)
 
   print_banner "Remove Environment Variable"
   echo ""
@@ -555,8 +565,9 @@ hanif_env_get() {
   fi
 
   local current
-  # Look up live value via env without invoking eval on user input.
-  current=$(env | awk -F= -v k="$key" '$1 == k { sub(/^[^=]+=/, ""); print }')
+  # printenv prints exactly the value of $key (no eval, no quoting issues),
+  # and exits 1 if the variable isn't set.
+  current=$(printenv "$key" 2>/dev/null || true)
   [[ -z "$current" ]] && current="(not exported)"
 
   print_banner "Variable: $key"
