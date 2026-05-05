@@ -7,7 +7,7 @@
 # ``register_command`` once at the top of that file.
 #
 # Each command file is expected to:
-#   1. Source ``lib/registry.sh`` is NOT required — ``bin/hanif`` does this.
+#   1. Sourcing ``lib/registry.sh`` is NOT required — ``bin/hanif`` does this.
 #   2. Call ``register_command`` once per command (or alias group) it provides.
 #   3. Define the handler function it referenced.
 #

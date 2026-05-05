@@ -8,6 +8,14 @@
 # ``register_command``.
 
 # Show general help, or topic-specific help when an argument is given.
+#
+# NOTE on availability of ``show_*_help`` functions:
+# ``bin/hanif`` sources every file in ``lib/commands/`` at startup (see
+# ``_load_commands``) before this function can ever be invoked, so each of
+# the topic-specific help functions (``show_git_help``, ``show_squash_help``,
+# ``show_bumpversion_help``, ``show_svg_help``) is already defined in the
+# current shell when ``show_help`` runs. No per-call ``source`` is needed —
+# verified by ``tests/test-squash.sh::test_help_squash_topic`` and friends.
 show_help() {
   if [[ $# -eq 0 ]]; then
     show_general_help

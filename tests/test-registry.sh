@@ -224,6 +224,24 @@ test_cli_help_built_in() {
   assert_contains "Built-in help shows USAGE" "$out" "USAGE"
 }
 
+test_cli_help_topics_resolve() {
+  # The help router calls show_*_help functions defined in each command file.
+  # These are made available by bin/hanif sourcing every lib/commands/*.sh at
+  # startup. This test guards that wiring against future regression.
+  local out
+  out=$("$HANIF" help git 2>&1)
+  assert_contains   "help git resolves"   "$out" "Git Helper Commands"
+  out=$("$HANIF" help squash 2>&1)
+  assert_contains   "help squash resolves" "$out" "Interactive Commit Squashing"
+  out=$("$HANIF" help bv 2>&1)
+  assert_contains   "help bv resolves"     "$out" "Version Bumping Tool"
+  out=$("$HANIF" help svg 2>&1)
+  assert_contains   "help svg resolves"    "$out" "SVG Conversion Commands"
+  # Git subcommand topics route to git help.
+  out=$("$HANIF" help nf 2>&1)
+  assert_contains   "help nf routes to git" "$out" "Git Helper Commands"
+}
+
 test_cli_skip_update_check_does_not_touch_home() {
   local fresh
   fresh=$(mktemp -d)
@@ -263,6 +281,7 @@ main() {
   run_test test_cli_alias_routes_to_handler
   run_test test_cli_legacy_git_passthrough_still_works
   run_test test_cli_help_built_in
+  run_test test_cli_help_topics_resolve
   run_test test_cli_skip_update_check_does_not_touch_home
 
   print_summary
