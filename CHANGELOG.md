@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+- **New command: `hanif env`** (alias `hanif e`) — manage persistent environment variables.
+  - Subcommands: `set KEY=VALUE` / `set KEY VALUE` (with overwrite detection), `unset KEY`, `list` (tabular view), `get KEY`, `source` (prints the load command for the current shell), `edit`, `path`.
+  - Persists to a Hanif-managed file (`~/.hanif/env.sh`, or `~/.hanif/env.fish` for fish) and wires the user's shell profile (`~/.zshrc`, `~/.bashrc`/`~/.bash_profile`, or `~/.config/fish/conf.d/hanif.fish`) to source it once on shell start. The profile is touched at most once and only after explicit confirmation.
+  - Strict safety: `KEY` validated against `^[A-Za-z_][A-Za-z0-9_]*$`, `VALUE` shell-quoted with `printf '%q'` before being written, no `eval` on user input, automatic `.bak` side-file before each write, secrets-looking keys (`*TOKEN*`/`*SECRET*`/`*PASSWORD*`/`*KEY*`/`*API*`) masked in `list`.
+  - Override with `HANIF_ENV_PROFILE` / `HANIF_ENV_FILE` / `HANIF_ENV_SHELL`.
+- `render_table` and `kv` helpers in `lib/utils/common.sh` for tabular and aligned key/value output (TTY/`NO_COLOR` aware, cyan box-drawing borders).
+- `gitclean` now ends with a polished tabular summary (kept / deleted / protected branches) and a one-line totals line.
+- `step`, `hint`, and `print_banner` helpers in `lib/utils/common.sh` for consistent UI across commands.
+- TTY / `NO_COLOR` / `HANIF_NO_COLOR` aware color rendering — colors are automatically stripped when output is piped or captured (keeps scripts and tests clean).
+
 ### Changed
 - `hanif nf` (newfeature) now accepts multi-word descriptions without quotes — `hanif nf add login form` works the same as `hanif nf "add login form"`. Quoted form remains fully supported.
 - Refreshed CLI output across the board for a more polished, professional feel:
@@ -9,10 +20,6 @@
   - Boxed banners on every help screen render in cyan/bold when the terminal supports it.
   - Squash interactive prompts and commit-selection list use color and consistent spacing.
   - Update-available notice uses bold/colored highlights.
-
-### Added
-- `step`, `hint`, and `print_banner` helpers in `lib/utils/common.sh` for consistent UI across commands.
-- TTY / `NO_COLOR` / `HANIF_NO_COLOR` aware color rendering — colors are automatically stripped when output is piped or captured (keeps scripts and tests clean).
 
 ## [0.4.0] - 2026-02-14
 

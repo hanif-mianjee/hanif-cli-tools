@@ -41,6 +41,9 @@ show_help() {
     svg)
       show_svg_help
       ;;
+    env|e)
+      show_env_help
+      ;;
     # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       show_git_help
@@ -78,6 +81,7 @@ GIT COMMANDS
 OTHER COMMANDS
   bv [subcommand]      Version bumping (bump2version compatible)
   svg <subcommand>     SVG to PNG conversion
+  env <subcommand>     Manage persistent environment variables
   self-update          Update Hanif CLI to latest version
   help [topic]         Show help
   version              Show version
@@ -90,6 +94,7 @@ EXAMPLES
   hanif squash 5
   hanif svg convert logo.svg 64,128,256
   hanif gi .env
+  hanif env set API_KEY=sk-abc123
   hanif help git
 
 LEGACY

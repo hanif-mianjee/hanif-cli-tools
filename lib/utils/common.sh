@@ -84,6 +84,113 @@ print_banner() {
   _hanif_render 1 "${CYAN}└${bar}┘${NC}"; printf '\n'
 }
 
+# Aligned key/value printer.
+#   kv "Profile" "~/.zshrc"   →  Profile  ~/.zshrc
+# The key is dim+bold so the value is what your eye lands on.
+#   $1 = key (label)
+#   $2 = value
+#   $3 = optional padding width for the key column (default 14)
+kv() {
+  local key="$1" value="$2" pad="${3:-14}"
+  _hanif_render 1 "  ${BOLD}${CYAN}$(printf '%-*s' "$pad" "$key")${NC}  ${value}"
+  printf '\n'
+}
+
+# Render a tabular view from tab-separated rows on stdin.
+#
+# The first argument is a pipe-separated list of header labels; subsequent
+# rows are read from stdin as TAB-separated values. Column widths are
+# auto-sized to the widest cell. Output uses light box-drawing characters
+# and is colorized (cyan borders, bold headers) when stdout is a TTY.
+#
+# Usage:
+#   {
+#     printf '%s\t%s\n' FOO "bar"
+#     printf '%s\t%s\n' BAZ "qux"
+#   } | render_table "KEY|VALUE"
+#
+# Notes:
+#   - Cells must not contain raw TAB or newline characters.
+#   - ANSI escape sequences in cell values are NOT supported (they would
+#     throw off the width calculation). Pass plain strings only.
+render_table() {
+  local header_spec="${1:-}"
+  if [[ -z "$header_spec" ]]; then
+    error "render_table: header spec is required"
+    return 1
+  fi
+
+  # Parse headers (pipe-separated).
+  local -a headers=()
+  local IFS='|'
+  read -r -a headers <<< "$header_spec"
+  IFS=$' \t\n'
+  local ncols=${#headers[@]}
+
+  # Read all rows into memory so we can size columns.
+  local -a rows=()
+  local line
+  while IFS= read -r line; do
+    rows+=("$line")
+  done
+
+  # Initialize widths from header lengths.
+  local -a widths=()
+  local i
+  for ((i = 0; i < ncols; i++)); do
+    widths[i]=${#headers[i]}
+  done
+
+  # Expand widths to fit data.
+  local row col_idx
+  local -a cells
+  for row in "${rows[@]}"; do
+    IFS=$'\t' read -r -a cells <<< "$row"
+    for ((i = 0; i < ncols; i++)); do
+      local cell="${cells[i]:-}"
+      (( ${#cell} > widths[i] )) && widths[i]=${#cell}
+    done
+  done
+
+  # Build separator: ┌──┬──┐, ├──┼──┤, └──┴──┘
+  local sep_top sep_mid sep_bot
+  sep_top="${CYAN}┌"; sep_mid="${CYAN}├"; sep_bot="${CYAN}└"
+  for ((i = 0; i < ncols; i++)); do
+    local bar
+    bar=$(printf '─%.0s' $(seq 1 $((widths[i] + 2))))
+    sep_top+="${bar}"
+    sep_mid+="${bar}"
+    sep_bot+="${bar}"
+    if (( i < ncols - 1 )); then
+      sep_top+="┬"; sep_mid+="┼"; sep_bot+="┴"
+    else
+      sep_top+="┐${NC}"; sep_mid+="┤${NC}"; sep_bot+="┘${NC}"
+    fi
+  done
+
+  # Header row.
+  _hanif_render 1 "$sep_top"; printf '\n'
+  local line_str="${CYAN}│${NC}"
+  for ((i = 0; i < ncols; i++)); do
+    line_str+=" ${BOLD}$(printf '%-*s' "${widths[i]}" "${headers[i]}")${NC} ${CYAN}│${NC}"
+  done
+  _hanif_render 1 "$line_str"; printf '\n'
+  _hanif_render 1 "$sep_mid"; printf '\n'
+
+  # Data rows.
+  for row in "${rows[@]}"; do
+    IFS=$'\t' read -r -a cells <<< "$row"
+    line_str="${CYAN}│${NC}"
+    for ((i = 0; i < ncols; i++)); do
+      local cell="${cells[i]:-}"
+      line_str+=" $(printf '%-*s' "${widths[i]}" "$cell") ${CYAN}│${NC}"
+    done
+    _hanif_render 1 "$line_str"; printf '\n'
+  done
+
+  _hanif_render 1 "$sep_bot"; printf '\n'
+}
+
 # ---------------------------------------------------------------------------
 # Environment helpers
 # ---------------------------------------------------------------------------
@@ -186,7 +293,7 @@ sed_inplace() {
 # ---------------------------------------------------------------------------
 # Exports — sourced files (and subshells) need access to these.
 # ---------------------------------------------------------------------------
-export -f info success warning error step hint print_banner _hanif_render
+export -f info success warning error step hint print_banner kv render_table _hanif_render
 export -f command_exists is_git_repo get_current_branch branch_exists
 export -f confirm check_git_version
 export -f sanitize_branch_name sed_inplace

@@ -113,6 +113,32 @@ hanif svg convert logo.svg 100,200 --prefix logo -o out  # Custom prefix/dir
 hanif svg chrome icon.svg                                 # Chrome extension icons
 ```
 
+## Env Command
+
+Persist exported environment variables across shell sessions. Hanif writes vars to a managed file (`~/.hanif/env.sh`, or `~/.hanif/env.fish` for fish) and wires your shell profile to source it on startup — your own profile is touched at most once and only after you confirm.
+
+```bash
+hanif env set API_KEY=sk-abc123                       # Asks before writing
+hanif env set DATABASE_URL "postgres://user:pass@host/db"  # Space form
+hanif env list                                        # Tabular view (secrets masked)
+hanif env get API_KEY                                 # Reveal a value
+hanif env unset API_KEY                               # Remove (asks first)
+hanif env source                                      # Print the load command for your shell
+hanif env path                                        # Show env file + profile + wiring status
+```
+
+**Safety:**
+
+- `KEY` validated against `^[A-Za-z_][A-Za-z0-9_]*$` — bad names rejected.
+- `VALUE` shell-quoted with `printf '%q'` before writing (or fish-quoted on fish); user input is never `eval`-ed.
+- Existing values trigger an overwrite warning before they're replaced.
+- Values that look like secrets (`*TOKEN*`, `*SECRET*`, `*PASSWORD*`, `*KEY*`, `*API*`) are masked in `list`.
+- A `.bak` side-file is created before every write.
+
+**Profile detection:** `zsh` → `~/.zshrc`, `bash` → `~/.bash_profile` (macOS) or `~/.bashrc` (Linux), `fish` → `~/.config/fish/conf.d/hanif.fish`. Override with `HANIF_ENV_PROFILE` / `HANIF_ENV_FILE`.
+
+Run `hanif env --help` for the full guide.
+
 ## Development
 
 ```bash

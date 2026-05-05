@@ -93,6 +93,7 @@ Git Commands:
 Other Commands:
   bv [subcommand]     Version bumping (bump2version compatible)
   svg <subcommand>    SVG to PNG conversion
+  env <subcommand>    Manage persistent environment variables
   self-update         Update Hanif CLI to latest version
   help [command]      Show help
   version             Show version
@@ -103,6 +104,7 @@ Examples:
   hanif up
   hanif squash 5
   hanif svg chrome icon.svg
+  hanif env set API_KEY=sk-abc123
   hanif help git
 EOF
 }
