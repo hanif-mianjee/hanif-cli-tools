@@ -71,7 +71,10 @@ gitclean() {
   local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
   [[ "$current_branch" == "HEAD" ]] && { echo "⚠️ Detached HEAD state"; current_branch=""; }
 
-  local protected_branches=("main" "master" "$current_branch")
+  # Build the protected branch list, excluding empty entries (defensive against
+  # the detached HEAD case above where current_branch is "").
+  local protected_branches=("main" "master")
+  [[ -n "$current_branch" ]] && protected_branches+=("$current_branch")
 
   echo "Fetching updates from origin..."
   git fetch -p || { echo "❌ Failed to fetch"; return 1; }

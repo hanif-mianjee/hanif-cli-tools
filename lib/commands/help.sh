@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
+#
+# Help command — topic-based help.
+#
+# The help command is invoked directly by ``bin/hanif`` (not via the
+# registry) so that ``hanif help`` works even before any user-defined
+# commands are loaded. As a result this file does NOT call
+# ``register_command``.
 
-# Help command handler for Hanif CLI
-
-# Show general help
+# Show general help, or topic-specific help when an argument is given.
 show_help() {
   if [[ $# -eq 0 ]]; then
     show_general_help
@@ -10,34 +15,24 @@ show_help() {
   fi
 
   local topic="$1"
-  
+
   case "$topic" in
     git)
-      source "${COMMANDS_DIR}/git.sh"
       show_git_help
       ;;
-    
     squash)
-      source "${COMMANDS_DIR}/squash.sh"
       show_squash_help
       ;;
-
     bumpversion|bv)
-      source "${COMMANDS_DIR}/bumpversion.sh"
       show_bumpversion_help
       ;;
-
     svg)
-      source "${COMMANDS_DIR}/svg.sh"
       show_svg_help
       ;;
-
-    # Git subcommands route to git help
+    # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
-      source "${COMMANDS_DIR}/git.sh"
       show_git_help
       ;;
-
     *)
       echo "❌ No help available for: $topic"
       echo ""
@@ -46,9 +41,8 @@ show_help() {
   esac
 }
 
-# Show general help information
 show_general_help() {
-  cat << EOF
+  cat <<EOF
 ┌─────────────────────────────────────────────┐
 │         Hanif CLI - Personal Tools          │
 │                 Version ${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│

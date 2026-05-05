@@ -125,20 +125,35 @@ bash tests/run-tests.sh
 ### Project Structure
 
 ```text
-bin/hanif              # Main CLI entry point
+bin/hanif              # Main CLI entry point (small dispatcher)
 lib/
-  commands/            # Command handlers (git, squash, bumpversion, svg, help)
-  functions/           # Core logic (git-functions, squash-functions, bumpversion-functions, svg-functions)
+  registry.sh          # Command registry & dispatcher
+  commands/            # Command files — each self-registers via register_command
+  functions/           # Heavy implementation logic, lazy-loaded by handlers
   utils/common.sh      # Shared utilities (logging, git helpers)
-tests/                 # Test suites
+tests/                 # Test suites (run via tests/run-tests.sh)
 scripts/               # Build/install/publish scripts
 ```
 
 ### Adding Commands
 
-1. Create `lib/commands/mycommand.sh` with a handler function
-2. Register in `bin/hanif` case statement
-3. Use: `hanif mycommand`
+Commands are auto-discovered. To add `hanif mycommand`:
+
+1. Create `lib/commands/mycommand.sh`
+2. Register and define your handler:
+
+   ```bash
+   register_command --name "mycommand" --group "Other" \
+     --handler "mycommand_handler" \
+     --description "What it does"
+
+   mycommand_handler() {
+     # Lazy-load any heavy logic from lib/functions/
+     echo "Hello from mycommand: $*"
+   }
+   ```
+
+3. Done — `bin/hanif` requires no changes. Add tests in `tests/test-mycommand.sh`.
 
 ### Publishing
 

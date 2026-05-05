@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
+#
+# SVG command — convert SVGs to PNGs.
 
-# SVG command handler for Hanif CLI
+register_command --name "svg" --group "Other" \
+  --handler "svg_command" \
+  --description "SVG to PNG conversion"
 
-# Source SVG functions
-# shellcheck source=../functions/svg-functions.sh
-source "${FUNCTIONS_DIR}/svg-functions.sh"
-
-# SVG subcommand dispatcher
 svg_command() {
+  # shellcheck source=../functions/svg-functions.sh
+  source "${FUNCTIONS_DIR}/svg-functions.sh"
+
   if [[ $# -eq 0 ]]; then
     show_svg_usage
-    exit 1
+    return 1
   fi
 
   local subcommand="$1"
@@ -20,33 +22,30 @@ svg_command() {
     convert|c)
       if [[ $# -lt 2 ]]; then
         error "Usage: hanif svg convert <input.svg> <sizes> [--prefix name] [--output-dir dir]"
-        exit 1
+        return 1
       fi
       svg_convert_cmd "$@"
       ;;
-
     chrome|chrome-icons)
       if [[ $# -eq 0 ]]; then
         error "Usage: hanif svg chrome <input.svg> [--output-dir dir]"
-        exit 1
+        return 1
       fi
       svg_chrome_cmd "$@"
       ;;
-
     help|--help|-h)
       show_svg_help
       ;;
-
     *)
       error "Unknown svg subcommand: $subcommand"
       echo ""
       show_svg_usage
-      exit 1
+      return 1
       ;;
   esac
 }
 
-# Generic SVG to PNG conversion
+# Generic SVG to PNG conversion.
 svg_convert_cmd() {
   local input="$1"
   local sizes_str="$2"
@@ -55,55 +54,40 @@ svg_convert_cmd() {
   local prefix="icon"
   local output_dir="."
 
-  # Parse optional flags
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --prefix|-p)
-        prefix="$2"
-        shift 2
-        ;;
-      --output-dir|-o)
-        output_dir="$2"
-        shift 2
-        ;;
+      --prefix|-p)     prefix="$2";     shift 2 ;;
+      --output-dir|-o) output_dir="$2"; shift 2 ;;
       *)
         error "Unknown option: $1"
-        exit 1
+        return 1
         ;;
     esac
   done
 
-  # Parse comma-separated sizes
   IFS=',' read -ra sizes <<< "$sizes_str"
-
-  # Validate sizes are numbers
   for s in "${sizes[@]}"; do
     if ! [[ "$s" =~ ^[0-9]+$ ]]; then
       error "Invalid size: $s (must be a number)"
-      exit 1
+      return 1
     fi
   done
 
   svg_to_pngs "$input" "$output_dir" "$prefix" "${sizes[@]}"
 }
 
-# Chrome extension icon generation (preset sizes: 16, 32, 48, 128)
+# Chrome extension icon generation (preset sizes: 16, 32, 48, 128).
 svg_chrome_cmd() {
   local input="$1"
   shift
 
   local output_dir="."
-
-  # Parse optional flags
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --output-dir|-o)
-        output_dir="$2"
-        shift 2
-        ;;
+      --output-dir|-o) output_dir="$2"; shift 2 ;;
       *)
         error "Unknown option: $1"
-        exit 1
+        return 1
         ;;
     esac
   done
@@ -112,9 +96,8 @@ svg_chrome_cmd() {
   svg_to_pngs "$input" "$output_dir" "icon" 16 32 48 128
 }
 
-# Show svg subcommand usage
 show_svg_usage() {
-  cat << 'EOF'
+  cat <<'EOF'
 SVG Commands:
 
 Usage: hanif svg <subcommand> [options]
@@ -133,9 +116,8 @@ Examples:
 EOF
 }
 
-# Show detailed svg help
 show_svg_help() {
-  cat << 'EOF'
+  cat <<'EOF'
 ┌─────────────────────────────────────────────┐
 │          SVG Conversion Commands            │
 └─────────────────────────────────────────────┘
