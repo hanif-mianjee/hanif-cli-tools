@@ -89,6 +89,7 @@ Git Commands:
   amend ["message"]   Amend last commit with current changes
   squash [count]      Interactive commit squashing (default: 20)
   gi <path>           Add to .gitignore & remove from tracking
+  gsetup [profile]    Set up a new git profile (config + SSH key)
 
 Other Commands:
   bv [subcommand]     Version bumping (bump2version compatible)
@@ -105,6 +106,7 @@ Examples:
   hanif squash 5
   hanif svg chrome icon.svg
   hanif env set API_KEY=sk-abc123
+  hanif gsetup work
   hanif help git
 EOF
 }

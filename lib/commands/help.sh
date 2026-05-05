@@ -44,6 +44,9 @@ show_help() {
     env|e)
       show_env_help
       ;;
+    gsetup|git-setup)
+      show_git_setup_help
+      ;;
     # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       show_git_help
@@ -77,6 +80,7 @@ GIT COMMANDS
   amend ["message"]    Amend last commit with current changes
   squash [count]       Interactive commit squashing (default: 20)
   gi <path>            Add to .gitignore & remove from tracking
+  gsetup [profile]     Set up a new git profile (config + SSH key)
 
 OTHER COMMANDS
   bv [subcommand]      Version bumping (bump2version compatible)

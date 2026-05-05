@@ -27,6 +27,7 @@ hanif amend                         # Amend last commit (keep message)
 hanif amend "new message"           # Amend last commit with new message
 hanif gi .env                       # Add .env to .gitignore & untrack
 hanif gi node_modules/              # Add node_modules/ to .gitignore & untrack
+hanif gsetup work                   # Set up a new git profile (config + SSH key)
 ```
 
 Smart branch naming with `nf`:
@@ -138,6 +139,22 @@ hanif env path                                        # Show env file + profile 
 **Profile detection:** `zsh` → `~/.zshrc`, `bash` → `~/.bash_profile` (macOS) or `~/.bashrc` (Linux), `fish` → `~/.config/fish/conf.d/hanif.fish`. Override with `HANIF_ENV_PROFILE` / `HANIF_ENV_FILE`.
 
 Run `hanif env --help` for the full guide.
+
+## Git Profile Setup
+
+Juggling work / personal / freelance / experiments accounts? `hanif gsetup` is a one-shot that wires everything up so git auto-picks the right identity AND SSH key based on which directory the repo lives in:
+
+```bash
+hanif gsetup work                   # Asks for repos dir + name + email, then:
+                                    #  • generates ~/.ssh/id_ed25519_work
+                                    #  • writes ~/.gitconfig-work
+                                    #  • appends an includeIf block to ~/.gitconfig
+                                    #  • prints the public key + GitHub/Azure DevOps instructions
+hanif gsetup personal               # Same flow for the next profile
+hanif git-setup freelance           # Long-form alias
+```
+
+After setup, every repo cloned under the profile's directory (default `~/code/<profile>`) automatically uses that profile's name, email, and SSH key — no per-repo configuration. Re-running for the same profile updates the `includeIf` block in place instead of duplicating it. Run `hanif gsetup --help` for the full guide.
 
 ## Development
 
