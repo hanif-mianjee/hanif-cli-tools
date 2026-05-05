@@ -136,8 +136,9 @@ SAFETY
     nothing user-supplied is ever eval'd.
   • Profile edits are idempotent — Hanif appends a single block
     delimited by "# >>> hanif env >>>" / "# <<< hanif env <<<".
-  • A timestamped backup of the managed file is created before
-    every write (kept as <file>.bak).
+  • A backup of the managed file is created before every write
+    as <file>.bak (overwritten on each write — keeps the most
+    recent prior version only).
 
 EOF
 }

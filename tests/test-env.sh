@@ -31,7 +31,7 @@ teardown() {
   # a system temp dir (mktemp -d guarantees this; the guard exists in case
   # a future refactor accidentally clears or repoints the variable).
   if [[ -n "$TEST_HOME" && -d "$TEST_HOME" ]] \
-     && [[ "$TEST_HOME" == /tmp/* || "$TEST_HOME" == /var/folders/* || "$TEST_HOME" == "${TMPDIR:-/__no__}"* ]]; then
+     && [[ "$TEST_HOME" == /tmp/* || "$TEST_HOME" == /var/folders/* ]]; then
     rm -rf "$TEST_HOME"
   fi
   unset HANIF_SKIP_UPDATE_CHECK HANIF_ENV_SHELL

@@ -182,7 +182,13 @@ _hanif_env_get_value() {
     fi
     printf '%s' "$v"
   else
-    # Source the single line in a clean subshell to decode any %q quoting.
+    # Decode the %q-quoted value by sourcing the single export line in a
+    # clean subshell, then printing the variable. This is intentionally
+    # constrained: $key is regex-validated before we get here, and the
+    # managed file is chmod 600 + only ever written by us via printf '%q'.
+    # If a user hand-edits the file with hostile content, that content
+    # would already run on every shell startup via the profile-sourced
+    # hook — so this `bash -c` does not widen the trust boundary.
     bash -c "$(printf '%s\n' "$line"; printf 'printf %%s "$%s"\n' "$key")"
   fi
 }
@@ -267,6 +273,8 @@ _hanif_env_delete() {
   local tmp
   tmp=$(mktemp)
   chmod 600 "$tmp"
+  # Drop the matching line(s); see the comment in _hanif_env_write — `|| true`
+  # turns "no lines matched" (grep -v exit 1) back into success.
   grep -Ev "$pattern" "$file" > "$tmp" || true
   cp "$file" "${file}.bak"
   mv "$tmp" "$file"
@@ -527,17 +535,25 @@ hanif_env_list() {
         display="${display:0:57}..."
       fi
       # Mask values that look like secrets so `list` is shoulder-surf safe.
-      # Use plain ASCII — render_table aligns by byte count, so multi-byte
-      # characters (•) and ANSI escapes would throw off column widths.
+      # Matched suffixes are intentional — broad enough to catch the common
+      # cases (TOKEN, SECRET, PASSWORD, *_API_KEY, *_ACCESS_KEY) without
+      # masking benign vars like KEYBOARD_LAYOUT or MONKEY_PATCH.
+      # Plain ASCII only — render_table aligns by byte count.
+      local mask=0
       case "$k" in
-        *TOKEN*|*SECRET*|*PASSWORD*|*PASSWD*|*KEY*|*API*)
-          if [[ ${#v} -gt 4 ]]; then
-            display="****${v: -4}  (masked)"
-          else
-            display="****  (masked)"
-          fi
-          ;;
+        *TOKEN|*_TOKEN|*TOKEN_*) mask=1 ;;
+        *SECRET|*_SECRET|*SECRET_*) mask=1 ;;
+        *PASSWORD|*_PASSWORD|*PASSWD|*_PASSWD) mask=1 ;;
+        *_KEY|*API_KEY*|*ACCESS_KEY*|*PRIVATE_KEY*|*SIGNING_KEY*) mask=1 ;;
+        *_API_TOKEN|*BEARER*|*CREDENTIAL*|*_PAT) mask=1 ;;
       esac
+      if (( mask )); then
+        if [[ ${#v} -gt 4 ]]; then
+          display="****${v: -4}  (masked)"
+        else
+          display="****  (masked)"
+        fi
+      fi
       printf '%s\t%s\n' "$k" "$display"
     done
   } | render_table "KEY|VALUE"
