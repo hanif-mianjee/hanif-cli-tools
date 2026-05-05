@@ -6,22 +6,80 @@
 # that are used in two or more places belong here.
 
 # Color codes (only set if not already defined to allow re-sourcing).
+#
+# Colors are disabled automatically when:
+#   - The relevant stream (stdout for most helpers, stderr for ``error``) is
+#     not a TTY (so piped/captured output stays clean for tests and scripts).
+#   - The ``NO_COLOR`` environment variable is set (https://no-color.org/).
+#   - ``HANIF_NO_COLOR`` is set (escape hatch for our own callers).
 if [[ -z "${HANIF_COLORS_DEFINED:-}" ]]; then
-  readonly RED='\033[0;31m'
-  readonly GREEN='\033[0;32m'
-  readonly YELLOW='\033[1;33m'
-  readonly BLUE='\033[0;34m'
-  readonly NC='\033[0m' # No Color
+  if [[ -z "${NO_COLOR:-}" && -z "${HANIF_NO_COLOR:-}" ]]; then
+    readonly RED='\033[0;31m'
+    readonly GREEN='\033[0;32m'
+    readonly YELLOW='\033[1;33m'
+    readonly BLUE='\033[0;34m'
+    readonly CYAN='\033[0;36m'
+    readonly MAGENTA='\033[0;35m'
+    readonly GRAY='\033[0;90m'
+    readonly BOLD='\033[1m'
+    readonly DIM='\033[2m'
+    readonly NC='\033[0m' # Reset
+  else
+    readonly RED='' GREEN='' YELLOW='' BLUE='' CYAN='' MAGENTA=''
+    readonly GRAY='' BOLD='' DIM='' NC=''
+  fi
   readonly HANIF_COLORS_DEFINED=1
 fi
+
+# Strip color codes when the target stream is not a TTY. Returns the original
+# string when colors should be shown, or a stripped copy when they shouldn't.
+#   $1 = fd (1 for stdout, 2 for stderr)
+#   $2 = string to render
+_hanif_render() {
+  local fd="$1"
+  local s="$2"
+  if [[ -n "${NO_COLOR:-}" || -n "${HANIF_NO_COLOR:-}" ]] || [[ ! -t "$fd" ]]; then
+    # shellcheck disable=SC2001
+    printf '%b' "$s" | sed $'s/\033\\[[0-9;]*m//g'
+  else
+    printf '%b' "$s"
+  fi
+}
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-info()    { echo -e "${BLUE}ℹ${NC} $*"; }
-success() { echo -e "${GREEN}✓${NC} $*"; }
-warning() { echo -e "${YELLOW}⚠${NC} $*"; }
-error()   { echo -e "${RED}✗${NC} $*" >&2; }
+info()    { _hanif_render 1 "${BLUE}ℹ${NC}  $*"; printf '\n'; }
+success() { _hanif_render 1 "${GREEN}✓${NC}  $*"; printf '\n'; }
+warning() { _hanif_render 1 "${YELLOW}⚠${NC}  $*"; printf '\n'; }
+error()   { _hanif_render 2 "${RED}✗${NC}  $*" >&2; printf '\n' >&2; }
+
+# Print a numbered/labelled step. Useful inside multi-stage commands.
+#   step "Fetching" "from origin"
+step()    { _hanif_render 1 "${CYAN}→${NC}  ${BOLD}$1${NC}${2:+ $2}"; printf '\n'; }
+
+# Print a faint hint line (e.g. "Tip: …" or contextual guidance).
+hint()    { _hanif_render 1 "${DIM}$*${NC}"; printf '\n'; }
+
+# Print a colored boxed banner. Width is fixed at 47 chars to match the
+# existing aesthetic of the help screens.
+#   print_banner "Hanif CLI v${VERSION}"
+print_banner() {
+  local title="$1"
+  local width=47
+  local pad=$(( width - ${#title} ))
+  (( pad < 0 )) && pad=0
+  local left=$(( pad / 2 ))
+  local right=$(( pad - left ))
+  local lpad rpad
+  lpad=$(printf '%*s' "$left" '')
+  rpad=$(printf '%*s' "$right" '')
+  local bar
+  bar=$(printf '─%.0s' $(seq 1 $width))
+  _hanif_render 1 "${CYAN}┌${bar}┐${NC}"; printf '\n'
+  _hanif_render 1 "${CYAN}│${NC}${lpad}${BOLD}${title}${NC}${rpad}${CYAN}│${NC}"; printf '\n'
+  _hanif_render 1 "${CYAN}└${bar}┘${NC}"; printf '\n'
+}
 
 # ---------------------------------------------------------------------------
 # Environment helpers
@@ -52,7 +110,9 @@ branch_exists() {
 confirm() {
   local prompt="${1:-Are you sure?}"
   local response
-  read -r -p "$(echo -e "${YELLOW}?${NC} ${prompt} [y/N]: ")" response
+  local prompt_str
+  prompt_str=$(_hanif_render 1 "${YELLOW}?${NC}  ${prompt} ${DIM}[y/N]${NC}: ")
+  read -r -p "$prompt_str" response
   case "$response" in
     [yY][eE][sS]|[yY]) return 0 ;;
     *) return 1 ;;
@@ -123,7 +183,7 @@ sed_inplace() {
 # ---------------------------------------------------------------------------
 # Exports — sourced files (and subshells) need access to these.
 # ---------------------------------------------------------------------------
-export -f info success warning error
+export -f info success warning error step hint print_banner _hanif_render
 export -f command_exists is_git_repo get_current_branch branch_exists
 export -f confirm check_git_version
 export -f sanitize_branch_name sed_inplace

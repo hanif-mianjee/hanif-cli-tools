@@ -15,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/
 
 ```bash
 hanif sync                          # Full sync (update main, rebase, clean)
-hanif nf "add user auth"            # → feature/add_user_auth
+hanif nf add user auth              # → feature/add_user_auth (no quotes needed!)
 hanif nf "JIRA-123: fix bug"        # → feature/jira-123_fix_bug
 hanif up                            # Update main/master branch
 hanif upall                         # Update all branches

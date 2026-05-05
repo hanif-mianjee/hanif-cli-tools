@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Changed
+- `hanif nf` (newfeature) now accepts multi-word descriptions without quotes — `hanif nf add login form` works the same as `hanif nf "add login form"`. Quoted form remains fully supported.
+- Refreshed CLI output across the board for a more polished, professional feel:
+  - Consistent colored, iconified status lines (`ℹ`, `✓`, `⚠`, `✗`, `→`) via shared logging helpers.
+  - Boxed banners on every help screen render in cyan/bold when the terminal supports it.
+  - Squash interactive prompts and commit-selection list use color and consistent spacing.
+  - Update-available notice uses bold/colored highlights.
+
+### Added
+- `step`, `hint`, and `print_banner` helpers in `lib/utils/common.sh` for consistent UI across commands.
+- TTY / `NO_COLOR` / `HANIF_NO_COLOR` aware color rendering — colors are automatically stripped when output is piped or captured (keeps scripts and tests clean).
+
 ## [0.4.0] - 2026-02-14
 
 ### Added

@@ -27,10 +27,8 @@ squash_command() {
 }
 
 show_squash_help() {
+  print_banner "Interactive Commit Squashing"
   cat <<'EOF'
-┌─────────────────────────────────────────────┐
-│         Interactive Commit Squashing        │
-└─────────────────────────────────────────────┘
 
 DESCRIPTION
   Interactively squash Git commits with smart message formatting.

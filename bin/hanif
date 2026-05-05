@@ -70,10 +70,8 @@ _load_commands
 # Top-level usage screen.
 # ---------------------------------------------------------------------------
 show_usage() {
+  print_banner "Hanif CLI v${VERSION}"
   cat <<EOF
-┌─────────────────────────────────────────────┐
-│              Hanif CLI v${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
-└─────────────────────────────────────────────┘
 
 Simple, extensible CLI for daily workflows
 
@@ -81,7 +79,7 @@ Usage: hanif <command> [options]
 
 Git Commands:
   sync                Full sync (update, rebase, clean)
-  nf "description"    Create feature branch
+  nf <description>    Create feature branch
   up                  Update main branch
   upall               Update all branches
   clean               Delete branches removed from remote
@@ -101,7 +99,7 @@ Other Commands:
 
 Examples:
   hanif sync
-  hanif nf "add feature"
+  hanif nf add login form
   hanif up
   hanif squash 5
   hanif svg chrome icon.svg

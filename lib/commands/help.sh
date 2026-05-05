@@ -46,7 +46,7 @@ show_help() {
       show_git_help
       ;;
     *)
-      echo "❌ No help available for: $topic"
+      error "No help available for: $topic"
       echo ""
       show_general_help
       ;;
@@ -54,11 +54,8 @@ show_help() {
 }
 
 show_general_help() {
+  print_banner "Hanif CLI v${VERSION}"
   cat <<EOF
-┌─────────────────────────────────────────────┐
-│         Hanif CLI - Personal Tools          │
-│                 Version ${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
-└─────────────────────────────────────────────┘
 
 A simple, extensible CLI for your daily workflows.
 
@@ -67,7 +64,7 @@ USAGE
 
 GIT COMMANDS
   sync                 Full git sync (update, rebase, clean)
-  nf "description"     New feature branch (extracts JIRA tickets)
+  nf <description>     New feature branch (extracts JIRA tickets)
   up                   Update main branch
   upall                Update all branches
   clean                Clean deleted branches
@@ -87,7 +84,7 @@ OTHER COMMANDS
 
 EXAMPLES
   hanif sync
-  hanif nf "add login"
+  hanif nf add login form
   hanif nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
   hanif squash 5

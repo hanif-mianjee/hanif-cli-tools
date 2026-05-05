@@ -4,15 +4,21 @@
 # gitup - Update main/master branch
 # Usage: gitup
 gitup() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
+  local target
   if git show-ref --verify --quiet refs/heads/main; then
-    git checkout main || return 1
+    target="main"
   else
-    git checkout master || return 1
+    target="master"
   fi
-  
+
+  step "Switching to $target"
+  git checkout "$target" || return 1
+
+  step "Fetching all remotes & pulling"
   git fetch --all && git pull
+  success "$target is up to date"
 }
 
 # gitupall - Update all local branches with remote changes
@@ -21,43 +27,43 @@ gitup() {
 # - Fetches once and merges locally (avoids multiple password prompts)
 # - Restores stash after completion
 gitupall() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
   local stash_created=false
-  
+
   if [[ -n "$(git status --porcelain)" ]]; then
-    echo "Stashing local changes..."
+    step "Stashing local changes"
     git stash push -m "Auto stash before updating branches" && stash_created=true
   fi
 
-  echo "Fetching all remote updates..."
-  git fetch --all || { echo "❌ Failed to fetch"; return 1; }
+  step "Fetching all remote updates"
+  git fetch --all || { error "Failed to fetch"; return 1; }
 
   local current_branch=$(git rev-parse --abbrev-ref HEAD)
 
-  echo "Updating all local branches..."
+  info "Updating all local branches…"
   for branch in $(git branch --format='%(refname:short)'); do
-    echo "--------------------------"
-    echo "Updating branch: $branch"
-    
-    git checkout "$branch" 2>/dev/null || { echo "⚠️ Could not checkout $branch"; continue; }
-    
+    hint "──────────────────────────────"
+    step "Updating" "$branch"
+
+    git checkout "$branch" 2>/dev/null || { warning "Could not checkout $branch"; continue; }
+
     local upstream=$(git rev-parse --abbrev-ref "$branch@{upstream}" 2>/dev/null)
     if [[ -n "$upstream" ]]; then
-      git merge --ff-only "$upstream" || echo "⚠️ Could not fast-forward $branch"
+      git merge --ff-only "$upstream" || warning "Could not fast-forward $branch"
     else
-      echo "ℹ️ No upstream configured for $branch"
+      info "No upstream configured for $branch"
     fi
   done
 
-  echo "Switching back to $current_branch..."
+  step "Switching back to" "$current_branch"
   git checkout "$current_branch" 2>/dev/null
 
-  echo "✨ All branches updated!"
+  success "All branches updated"
 
   if [[ "$stash_created" == "true" ]]; then
-    echo "Restoring stashed changes..."
-    git stash pop || echo "⚠️ Stash pop failed - run 'git stash pop' manually"
+    step "Restoring stashed changes"
+    git stash pop || warning "Stash pop failed — run 'git stash pop' manually"
   fi
 }
 
@@ -66,40 +72,40 @@ gitupall() {
 # - Protects main, master, and current branch
 # - Only deletes branches that have been removed from origin
 gitclean() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
   local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-  [[ "$current_branch" == "HEAD" ]] && { echo "⚠️ Detached HEAD state"; current_branch=""; }
+  [[ "$current_branch" == "HEAD" ]] && { warning "Detached HEAD state"; current_branch=""; }
 
   # Build the protected branch list, excluding empty entries (defensive against
   # the detached HEAD case above where current_branch is "").
   local protected_branches=("main" "master")
   [[ -n "$current_branch" ]] && protected_branches+=("$current_branch")
 
-  echo "Fetching updates from origin..."
-  git fetch -p || { echo "❌ Failed to fetch"; return 1; }
+  step "Fetching updates from origin"
+  git fetch -p || { error "Failed to fetch"; return 1; }
 
-  echo "🔍 Checking for local branches that were deleted from remote..."
+  info "Checking for local branches that were deleted from remote…"
   for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
     # Skip protected branches
     if [[ " ${protected_branches[*]} " =~ " ${branch} " ]]; then
-      echo "⛔ Skipping protected branch: $branch"
+      hint "  ⛔  Skipping protected branch: $branch"
       continue
     fi
 
     # Check if branch has upstream
     local upstream=$(git rev-parse --abbrev-ref "$branch@{upstream}" 2>/dev/null)
     if [[ -z "$upstream" ]]; then
-      echo "🛑 Keeping local-only branch: $branch"
+      hint "  •  Keeping local-only branch: $branch"
       continue
     fi
 
     # Check if upstream still exists (using local refs after fetch -p)
     if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
-      echo "🗑  Deleting branch (gone from remote): $branch"
+      warning "Deleting branch (gone from remote): $branch"
       git branch -D "$branch"
     else
-      echo "✅ Keeping active branch: $branch"
+      hint "  ✓  Keeping active branch: $branch"
     fi
   done
 }
@@ -118,10 +124,12 @@ gitclean() {
 #   newfeature "JIRA-123 Update API endpoints"
 #     → creates: feature/jira-123_update_api_endpoints
 newfeature() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
-  if [ -z "$1" ]; then
-    echo "❌ Usage: newfeature \"description\" or newfeature \"TICKET-123: description\""
+  if [ -z "${1:-}" ]; then
+    error "Usage: newfeature <description>"
+    hint "  newfeature add login form"
+    hint "  newfeature \"TICKET-123: add login form\""
     return 1
   fi
 
@@ -174,7 +182,7 @@ newfeature() {
   # Example: "feature/om-755_very_long_name_" → "feature/om-755_very_long_name"
   branch_name=$(echo "$branch_name" | sed 's/_$//')
 
-  echo "🚀 Creating branch: $branch_name"
+  step "Creating branch" "$branch_name"
   git checkout -b "$branch_name"
 }
 
@@ -184,11 +192,11 @@ newfeature() {
 # - Stashes local changes before rebase
 # - Restores stash after successful rebase
 gitrebase() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
-  if [ -z "$1" ]; then
-    echo "❌ Usage: gitrebase <base-branch>"
-    echo "Example: gitrebase main"
+  if [ -z "${1:-}" ]; then
+    error "Usage: gitrebase <base-branch>"
+    hint "  Example: gitrebase main"
     return 1
   fi
 
@@ -196,52 +204,52 @@ gitrebase() {
   local current_branch=$(git rev-parse --abbrev-ref HEAD)
   
   # Validations
-  [[ "$current_branch" == "HEAD" ]] && { echo "❌ Cannot rebase from detached HEAD"; return 1; }
-  [[ "$current_branch" == "$base_branch" ]] && { echo "❌ Cannot rebase a branch onto itself"; return 1; }
-  git show-ref --verify --quiet "refs/heads/$base_branch" || { echo "❌ Base branch '$base_branch' does not exist"; return 1; }
+  [[ "$current_branch" == "HEAD" ]] && { error "Cannot rebase from detached HEAD"; return 1; }
+  [[ "$current_branch" == "$base_branch" ]] && { error "Cannot rebase a branch onto itself"; return 1; }
+  git show-ref --verify --quiet "refs/heads/$base_branch" || { error "Base branch '$base_branch' does not exist"; return 1; }
 
   # Stash if needed
   local stash_created=false
   if [[ -n "$(git status --porcelain)" ]]; then
-    echo "Stashing local changes..."
-    git stash push -m "Auto stash before rebase with $base_branch" && stash_created=true || { echo "❌ Failed to stash"; return 1; }
+    step "Stashing local changes"
+    git stash push -m "Auto stash before rebase with $base_branch" && stash_created=true || { error "Failed to stash"; return 1; }
   fi
 
   # Update base branch
-  echo "Updating base branch '$base_branch'..."
+  step "Updating base branch" "'$base_branch'"
   git checkout "$base_branch" || { [[ "$stash_created" == "true" ]] && git stash pop; return 1; }
   
   if ! git fetch --all; then
-    echo "❌ Failed to fetch updates"
+    error "Failed to fetch updates"
     git checkout "$current_branch" 2>/dev/null
     [[ "$stash_created" == "true" ]] && git stash pop
     return 1
   fi
   
-  git pull --ff-only || echo "⚠️ Could not fast-forward $base_branch"
+  git pull --ff-only || warning "Could not fast-forward $base_branch"
   
   # Return to current branch
-  echo "Switching back to '$current_branch'..."
+  step "Switching back to" "'$current_branch'"
   git checkout "$current_branch" || { [[ "$stash_created" == "true" ]] && git stash pop; return 1; }
 
   # Rebase
-  echo "Rebasing '$current_branch' onto '$base_branch'..."
+  step "Rebasing" "'$current_branch' onto '$base_branch'"
   if git rebase "$base_branch"; then
-    echo "✨ Rebase completed successfully!"
+    success "Rebase completed successfully"
   else
-    echo "⚠️ Rebase conflicts - resolve and run: git rebase --continue"
-    echo "ℹ️ Or abort with: git rebase --abort"
-    [[ "$stash_created" == "true" ]] && echo "ℹ️ Run 'git stash pop' after resolving rebase"
+    warning "Rebase conflicts — resolve and run: git rebase --continue"
+    info "Or abort with: git rebase --abort"
+    [[ "$stash_created" == "true" ]] && info "Run 'git stash pop' after resolving rebase"
     return 1
   fi
 
   # Restore stash
   if [[ "$stash_created" == "true" ]]; then
-    echo "Restoring stashed changes..."
-    git stash pop || echo "⚠️ Stash pop failed - run 'git stash pop' manually"
+    step "Restoring stashed changes"
+    git stash pop || warning "Stash pop failed — run 'git stash pop' manually"
   fi
 
-  echo "✅ Done! '$current_branch' rebased onto '$base_branch'"
+  success "Done — '$current_branch' rebased onto '$base_branch'"
 }
 
 # gitamend - Amend the last commit with staged changes
@@ -250,7 +258,7 @@ gitrebase() {
 # - Stages all changes, amends last commit with current date
 # - Useful for small fixes/typos you want folded into the last commit
 gitamend() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
   # Stage all changes
   git add -A
@@ -266,11 +274,11 @@ gitamend() {
   elif [[ "$has_changes" = true ]]; then
     git commit --amend --date=now --no-edit --no-verify
   else
-    echo "⚠️ No changes to amend and no message provided"
+    warning "No changes to amend and no message provided"
     return 1
   fi
 
-  echo "✅ Amended last commit"
+  success "Amended last commit"
 }
 
 # gitignore - Add a path to .gitignore and remove it from git tracking
@@ -279,12 +287,12 @@ gitamend() {
 # - Appends path to .gitignore (avoids duplicates)
 # - Removes path from git index (keeps file on disk)
 gitignore_add() {
-  git rev-parse --git-dir >/dev/null 2>&1 || { echo "❌ Not a git repository"; return 1; }
+  is_git_repo || { error "Not a git repository"; return 1; }
 
   if [[ -z "${1:-}" ]]; then
-    echo "❌ Usage: hanif gi <path>"
-    echo "  Example: hanif gi .env"
-    echo "  Example: hanif gi node_modules/"
+    error "Usage: hanif gi <path>"
+    hint "  Example: hanif gi .env"
+    hint "  Example: hanif gi node_modules/"
     return 1
   fi
 
@@ -292,31 +300,31 @@ gitignore_add() {
 
   # Create .gitignore if it doesn't exist
   if [[ ! -f .gitignore ]]; then
-    echo "ℹ️  Creating .gitignore file..."
+    info "Creating .gitignore file…"
     touch .gitignore
-    echo "✅ Created .gitignore"
+    success "Created .gitignore"
   fi
 
   # Check if path is already in .gitignore
   if grep -qxF "$path" .gitignore 2>/dev/null; then
-    echo "⚠️  '$path' is already in .gitignore"
+    warning "'$path' is already in .gitignore"
   else
     # Append path to .gitignore
     echo "$path" >> .gitignore
-    echo "✅ Added '$path' to .gitignore"
+    success "Added '$path' to .gitignore"
   fi
 
   # Remove from git index (keep file on disk)
   if git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
-    echo "ℹ️  Removing '$path' from git index..."
+    info "Removing '$path' from git index…"
     git rm -r --cached "$path" >/dev/null 2>&1
-    echo "✅ Removed '$path' from git tracking (file kept on disk)"
+    success "Removed '$path' from git tracking (file kept on disk)"
   else
-    echo "ℹ️  '$path' is not currently tracked by git"
+    info "'$path' is not currently tracked by git"
   fi
 
   echo ""
-  echo "ℹ️  Next steps:"
-  echo "  1. Review changes: git status"
-  echo "  2. Commit: git commit -m \"Add $path to .gitignore\""
+  info "Next steps:"
+  hint "  1. Review changes: git status"
+  hint "  2. Commit:         git commit -m \"Add $path to .gitignore\""
 }

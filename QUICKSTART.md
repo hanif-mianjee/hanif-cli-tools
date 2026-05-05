@@ -17,7 +17,7 @@ hanif help
 | Command | What it does |
 |---------|-------------|
 | `hanif sync` | Update main, rebase, cleanup |
-| `hanif nf "desc"` | Create feature branch |
+| `hanif nf <desc>` | Create feature branch (multi-word, no quotes needed) |
 | `hanif up` | Update main branch |
 | `hanif upall` | Update all branches |
 | `hanif clean` | Delete branches removed from remote |
@@ -31,7 +31,7 @@ hanif help
 
 ```bash
 # Create a feature branch
-hanif nf "add user authentication"
+hanif nf add user authentication
 # → feature/add_user_authentication
 
 # With ticket number

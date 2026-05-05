@@ -110,13 +110,21 @@ git_sync_handler() {
 git_nf_handler() {
   _git_load_funcs
   if [[ $# -eq 0 ]]; then
-    error "Usage: hanif nf \"description\""
+    error "Usage: hanif nf <description>"
+    hint "  hanif nf add login form"
+    hint "  hanif nf \"JIRA-123: add login form\""
     return 1
   fi
   case "${1:-}" in
     help|--help|-h) show_git_help; return 0 ;;
   esac
-  newfeature "$@"
+  # Accept multi-word descriptions without requiring quotes — mirrors how
+  # ``hanif squash`` reads multi-word commit messages. ``"$*"`` joins all
+  # arguments with a single space so:
+  #   hanif nf add login form          → "add login form"
+  #   hanif nf "JIRA-123: add login"   → "JIRA-123: add login"
+  # both produce the same result.
+  newfeature "$*"
 }
 
 git_up_handler()    { _git_load_funcs; _git_help_or_run gitup    "$@"; }
@@ -184,7 +192,7 @@ Usage: hanif <command> [options]
 
 Commands:
   sync                     Full sync (update, rebase, clean)
-  nf, newfeature <desc>    Create feature branch
+  nf, newfeature <desc>    Create feature branch (multi-word, no quotes needed)
   up, update               Update main branch
   upall, updateall         Update all branches
   clean                    Delete branches removed from remote
@@ -196,7 +204,7 @@ Commands:
 
 Examples:
   hanif sync
-  hanif nf "add feature"
+  hanif nf add login form
   hanif nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
   hanif rb main
@@ -208,10 +216,8 @@ EOF
 }
 
 show_git_help() {
+  print_banner "Git Helper Commands"
   cat <<'EOF'
-┌─────────────────────────────────────────────┐
-│           Git Helper Commands               │
-└─────────────────────────────────────────────┘
 
 SYNC
   Full repository sync - perfect for starting work
@@ -223,11 +229,12 @@ SYNC
 NEWFEATURE (nf)
   Create feature branch with smart naming
   Automatically extracts JIRA/ticket numbers
+  Multi-word descriptions work without quotes
 
-  hanif nf "add login"
+  hanif nf add login
     → feature/add_login
 
-  hanif nf "JIRA-123: fix bug"
+  hanif nf JIRA-123 fix bug
     → feature/jira-123_fix_bug
 
   hanif nf "OM-456 implement feature"
