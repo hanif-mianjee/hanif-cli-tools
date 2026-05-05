@@ -14,8 +14,12 @@
 # ``_load_commands``) before this function can ever be invoked, so each of
 # the topic-specific help functions (``show_git_help``, ``show_squash_help``,
 # ``show_bumpversion_help``, ``show_svg_help``) is already defined in the
-# current shell when ``show_help`` runs. No per-call ``source`` is needed —
-# verified by ``tests/test-squash.sh::test_help_squash_topic`` and friends.
+# current shell when ``show_help`` runs. No per-call ``source`` is needed.
+# This wiring is locked down by:
+#   - tests/test-registry.sh::test_cli_help_topics_resolve  (covers all topics)
+#   - tests/test-squash.sh::test_help_squash_topic
+#   - tests/test-bumpversion.sh (help bv)
+#   - tests/test-gitignore.sh (help gi → routes to git help)
 show_help() {
   if [[ $# -eq 0 ]]; then
     show_general_help

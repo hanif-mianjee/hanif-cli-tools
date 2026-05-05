@@ -34,13 +34,15 @@ teardown() {
 # Registry unit tests — load registry.sh in a subshell and exercise its API.
 # ---------------------------------------------------------------------------
 
-# Run a snippet against a fresh registry. Captures stdout.
+# Run a snippet against a fresh registry. The snippet is fed via stdin
+# (heredoc) rather than interpolated into ``bash -c "$1"``, so test inputs
+# cannot accidentally form an injection vector.
 _with_registry() {
-  bash -c '
-    set -euo pipefail
-    source "'"$PROJECT_ROOT"'/lib/registry.sh"
-    '"$1"'
-  '
+  bash <<EOF
+set -euo pipefail
+source "$PROJECT_ROOT/lib/registry.sh"
+$1
+EOF
 }
 
 test_register_and_lookup() {
