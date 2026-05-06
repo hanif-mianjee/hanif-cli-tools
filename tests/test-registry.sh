@@ -164,14 +164,16 @@ test_cli_registers_expected_commands() {
       for f in "$COMMANDS_DIR"/*.sh; do source "$f"; done
       for n in sync nf newfeature up update upall updateall clean rb rebase \
                pull st status amend gi gitignore git \
-               squash bv bumpversion svg self-update; do
+               squash bv bumpversion svg self-update \
+               clip pr ip serve ports wip unwip undo stash; do
         if registry_has "$n"; then echo "OK:$n"; else echo "MISS:$n"; fi
       done
     '
   )
   for name in sync nf newfeature up update upall updateall clean rb rebase \
               pull st status amend gi gitignore git \
-              squash bv bumpversion svg self-update; do
+              squash bv bumpversion svg self-update \
+              clip pr ip serve ports wip unwip undo stash; do
     assert_contains "Registry has $name" "$out" "OK:$name"
   done
 }
@@ -239,6 +241,25 @@ test_cli_help_topics_resolve() {
   assert_contains   "help bv resolves"     "$out" "Version Bumping Tool"
   out=$("$HANIF" help svg 2>&1)
   assert_contains   "help svg resolves"    "$out" "SVG Conversion Commands"
+  # New productivity / git topics.
+  out=$("$HANIF" help clip 2>&1)
+  assert_contains   "help clip resolves"   "$out" "Cross-Platform Clipboard"
+  out=$("$HANIF" help pr 2>&1)
+  assert_contains   "help pr resolves"     "$out" "Open Pull Request URL"
+  out=$("$HANIF" help ip 2>&1)
+  assert_contains   "help ip resolves"     "$out" "Local & Public IP"
+  out=$("$HANIF" help serve 2>&1)
+  assert_contains   "help serve resolves"  "$out" "Static HTTP Server"
+  out=$("$HANIF" help ports 2>&1)
+  assert_contains   "help ports resolves"  "$out" "Listening Ports"
+  out=$("$HANIF" help wip 2>&1)
+  assert_contains   "help wip resolves"    "$out" "Park / Restore Work In Progress"
+  out=$("$HANIF" help unwip 2>&1)
+  assert_contains   "help unwip resolves"  "$out" "Park / Restore Work In Progress"
+  out=$("$HANIF" help undo 2>&1)
+  assert_contains   "help undo resolves"   "$out" "Undo the Last Git Thing"
+  out=$("$HANIF" help stash 2>&1)
+  assert_contains   "help stash resolves"  "$out" "Friendlier git stash"
   # Git subcommand topics route to git help.
   out=$("$HANIF" help nf 2>&1)
   assert_contains   "help nf routes to git" "$out" "Git Helper Commands"

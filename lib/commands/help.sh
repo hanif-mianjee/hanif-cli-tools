@@ -47,6 +47,30 @@ show_help() {
     gsetup|git-setup)
       show_git_setup_help
       ;;
+    clip)
+      show_clip_help
+      ;;
+    pr)
+      show_pr_help
+      ;;
+    ip)
+      show_ip_help
+      ;;
+    serve)
+      show_serve_help
+      ;;
+    ports)
+      show_ports_help
+      ;;
+    wip|unwip)
+      show_wip_help
+      ;;
+    undo)
+      show_undo_help
+      ;;
+    stash)
+      show_stash_help
+      ;;
     # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       show_git_help
@@ -81,6 +105,17 @@ GIT COMMANDS
   squash [count]       Interactive commit squashing (default: 20)
   gi <path>            Add to .gitignore & remove from tracking
   gsetup [profile]     Set up a new git profile (config + SSH key)
+  wip [message]        Stage everything and commit as a WIP marker
+  unwip                Undo the last WIP commit (restore staged state)
+  undo                 Interactive 'undo the last git thing' menu
+  stash <subcommand>   Friendlier git stash (save/list/pop/drop)
+  pr [url|copy]        Open the current branch's pull request page
+
+PRODUCTIVITY COMMANDS
+  clip [paste|detect]  Cross-platform clipboard (copy/paste)
+  ip [local|public]    Show local + public IP address
+  ports [PORT|kill]    Inspect / kill processes on TCP ports
+  serve [PORT] [DIR]   One-shot static HTTP server in current dir
 
 OTHER COMMANDS
   bv [subcommand]      Version bumping (bump2version compatible)
@@ -99,6 +134,9 @@ EXAMPLES
   hanif svg convert logo.svg 64,128,256
   hanif gi .env
   hanif env set API_KEY=sk-abc123
+  hanif pr
+  hanif serve 3000
+  hanif ports kill 3000
   hanif help git
 
 LEGACY
