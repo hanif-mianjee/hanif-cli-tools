@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-06
+
 ### Added
 - **New command: `hanif gsetup`** (alias `hanif git-setup`) — one-shot setup for a new git profile (work, personal, freelance, experiments, …).
   - Asks for a profile name (or accepts it as an argument), suggests a default repos directory (`~/code/<profile>`), and prompts for `user.name` / `user.email`.
