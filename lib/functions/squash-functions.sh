@@ -33,13 +33,17 @@ EOF
     exit 1
   fi
 
-  echo "📜 Select a commit to squash everything into:"
+  echo ""
+  _hanif_render 1 "${BOLD}${MAGENTA}📜  Select a commit to squash everything into:${NC}"; printf '\n'
   for j in $(seq 1 $i); do
-    echo "$j) ${commits[j]}"
+    _hanif_render 1 "  ${CYAN}$(printf '%2d' "$j")${NC})  ${commits[j]}"; printf '\n'
   done
+  echo ""
 
   while true; do
-    printf "Enter number [1-%s]: " "$i"
+    local prompt_str
+    prompt_str=$(_hanif_render 1 "${YELLOW}?${NC}  Enter number ${DIM}[1-$i]${NC}: ")
+    printf '%s' "$prompt_str"
     read -r choice
     if echo "$choice" | grep -Eq "^[0-9]+$" && [ "$choice" -ge 1 ] && [ "$choice" -le "$i" ]; then
       local base_hash
@@ -57,9 +61,11 @@ EOF
       selected_commit_msg=$(git log -1 --format='%s' "$base_hash")
 
       echo ""
-      echo "💬 Enter custom message for squashed commit"
-      echo "   (Press Enter to use: \"$selected_commit_msg\")"
-      printf "Message: "
+      _hanif_render 1 "${BOLD}${MAGENTA}💬  Enter custom message for squashed commit${NC}"; printf '\n'
+      hint "   (Press Enter to use: \"$selected_commit_msg\")"
+      local msg_prompt
+      msg_prompt=$(_hanif_render 1 "${YELLOW}?${NC}  Message: ")
+      printf '%s' "$msg_prompt"
       read -r custom_msg
 
       # Trim whitespace and surrounding quotes from the custom message.

@@ -41,12 +41,18 @@ show_help() {
     svg)
       show_svg_help
       ;;
+    env|e)
+      show_env_help
+      ;;
+    gsetup|git-setup)
+      show_git_setup_help
+      ;;
     # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       show_git_help
       ;;
     *)
-      echo "❌ No help available for: $topic"
+      error "No help available for: $topic"
       echo ""
       show_general_help
       ;;
@@ -54,11 +60,8 @@ show_help() {
 }
 
 show_general_help() {
+  print_banner "Hanif CLI v${VERSION}"
   cat <<EOF
-┌─────────────────────────────────────────────┐
-│         Hanif CLI - Personal Tools          │
-│                 Version ${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
-└─────────────────────────────────────────────┘
 
 A simple, extensible CLI for your daily workflows.
 
@@ -67,7 +70,7 @@ USAGE
 
 GIT COMMANDS
   sync                 Full git sync (update, rebase, clean)
-  nf "description"     New feature branch (extracts JIRA tickets)
+  nf <description>     New feature branch (extracts JIRA tickets)
   up                   Update main branch
   upall                Update all branches
   clean                Clean deleted branches
@@ -77,22 +80,25 @@ GIT COMMANDS
   amend ["message"]    Amend last commit with current changes
   squash [count]       Interactive commit squashing (default: 20)
   gi <path>            Add to .gitignore & remove from tracking
+  gsetup [profile]     Set up a new git profile (config + SSH key)
 
 OTHER COMMANDS
   bv [subcommand]      Version bumping (bump2version compatible)
   svg <subcommand>     SVG to PNG conversion
+  env <subcommand>     Manage persistent environment variables
   self-update          Update Hanif CLI to latest version
   help [topic]         Show help
   version              Show version
 
 EXAMPLES
   hanif sync
-  hanif nf "add login"
+  hanif nf add login form
   hanif nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
   hanif squash 5
   hanif svg convert logo.svg 64,128,256
   hanif gi .env
+  hanif env set API_KEY=sk-abc123
   hanif help git
 
 LEGACY

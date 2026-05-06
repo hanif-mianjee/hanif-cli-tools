@@ -117,10 +117,8 @@ EOF
 }
 
 show_svg_help() {
+  print_banner "SVG Conversion Commands"
   cat <<'EOF'
-┌─────────────────────────────────────────────┐
-│          SVG Conversion Commands            │
-└─────────────────────────────────────────────┘
 
 CONVERT (c)
   Convert any SVG to PNG at custom sizes

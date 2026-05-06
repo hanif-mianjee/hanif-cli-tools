@@ -15,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/
 
 ```bash
 hanif sync                          # Full sync (update main, rebase, clean)
-hanif nf "add user auth"            # → feature/add_user_auth
+hanif nf add user auth              # → feature/add_user_auth (no quotes needed!)
 hanif nf "JIRA-123: fix bug"        # → feature/jira-123_fix_bug
 hanif up                            # Update main/master branch
 hanif upall                         # Update all branches
@@ -27,6 +27,7 @@ hanif amend                         # Amend last commit (keep message)
 hanif amend "new message"           # Amend last commit with new message
 hanif gi .env                       # Add .env to .gitignore & untrack
 hanif gi node_modules/              # Add node_modules/ to .gitignore & untrack
+hanif gsetup work                   # Set up a new git profile (config + SSH key)
 ```
 
 Smart branch naming with `nf`:
@@ -112,6 +113,48 @@ hanif svg convert icon.svg 16,32,64                      # Custom sizes
 hanif svg convert logo.svg 100,200 --prefix logo -o out  # Custom prefix/dir
 hanif svg chrome icon.svg                                 # Chrome extension icons
 ```
+
+## Env Command
+
+Persist exported environment variables across shell sessions. Hanif writes vars to a managed file (`~/.hanif/env.sh`, or `~/.hanif/env.fish` for fish) and wires your shell profile to source it on startup — your own profile is touched at most once and only after you confirm.
+
+```bash
+hanif env set API_KEY=sk-abc123                       # Asks before writing
+hanif env set DATABASE_URL "postgres://user:pass@host/db"  # Space form
+hanif env list                                        # Tabular view (secrets masked)
+hanif env get API_KEY                                 # Reveal a value
+hanif env unset API_KEY                               # Remove (asks first)
+hanif env source                                      # Print the load command for your shell
+hanif env path                                        # Show env file + profile + wiring status
+```
+
+**Safety:**
+
+- `KEY` validated against `^[A-Za-z_][A-Za-z0-9_]*$` — bad names rejected.
+- `VALUE` shell-quoted with `printf '%q'` before writing (or fish-quoted on fish); user input is never `eval`-ed.
+- Existing values trigger an overwrite warning before they're replaced.
+- Values that look like secrets (`*TOKEN*`, `*SECRET*`, `*PASSWORD*`, `*KEY*`, `*API*`) are masked in `list`.
+- A `.bak` side-file is created before every write.
+
+**Profile detection:** `zsh` → `~/.zshrc`, `bash` → `~/.bash_profile` (macOS) or `~/.bashrc` (Linux), `fish` → `~/.config/fish/conf.d/hanif.fish`. Override with `HANIF_ENV_PROFILE` / `HANIF_ENV_FILE`.
+
+Run `hanif env --help` for the full guide.
+
+## Git Profile Setup
+
+Juggling work / personal / freelance / experiments accounts? `hanif gsetup` is a one-shot that wires everything up so git auto-picks the right identity AND SSH key based on which directory the repo lives in:
+
+```bash
+hanif gsetup work                   # Asks for repos dir + name + email, then:
+                                    #  • generates ~/.ssh/id_ed25519_work
+                                    #  • writes ~/.gitconfig-work
+                                    #  • appends an includeIf block to ~/.gitconfig
+                                    #  • prints the public key + GitHub/Azure DevOps instructions
+hanif gsetup personal               # Same flow for the next profile
+hanif git-setup freelance           # Long-form alias
+```
+
+After setup, every repo cloned under the profile's directory (default `~/code/<profile>`) automatically uses that profile's name, email, and SSH key — no per-repo configuration. Re-running for the same profile updates the `includeIf` block in place instead of duplicating it. Run `hanif gsetup --help` for the full guide.
 
 ## Development
 

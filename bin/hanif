@@ -70,10 +70,8 @@ _load_commands
 # Top-level usage screen.
 # ---------------------------------------------------------------------------
 show_usage() {
+  print_banner "Hanif CLI v${VERSION}"
   cat <<EOF
-┌─────────────────────────────────────────────┐
-│              Hanif CLI v${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
-└─────────────────────────────────────────────┘
 
 Simple, extensible CLI for daily workflows
 
@@ -81,7 +79,7 @@ Usage: hanif <command> [options]
 
 Git Commands:
   sync                Full sync (update, rebase, clean)
-  nf "description"    Create feature branch
+  nf <description>    Create feature branch
   up                  Update main branch
   upall               Update all branches
   clean               Delete branches removed from remote
@@ -91,20 +89,24 @@ Git Commands:
   amend ["message"]   Amend last commit with current changes
   squash [count]      Interactive commit squashing (default: 20)
   gi <path>           Add to .gitignore & remove from tracking
+  gsetup [profile]    Set up a new git profile (config + SSH key)
 
 Other Commands:
   bv [subcommand]     Version bumping (bump2version compatible)
   svg <subcommand>    SVG to PNG conversion
+  env <subcommand>    Manage persistent environment variables
   self-update         Update Hanif CLI to latest version
   help [command]      Show help
   version             Show version
 
 Examples:
   hanif sync
-  hanif nf "add feature"
+  hanif nf add login form
   hanif up
   hanif squash 5
   hanif svg chrome icon.svg
+  hanif env set API_KEY=sk-abc123
+  hanif gsetup work
   hanif help git
 EOF
 }

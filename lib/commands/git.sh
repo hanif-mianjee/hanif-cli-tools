@@ -110,13 +110,21 @@ git_sync_handler() {
 git_nf_handler() {
   _git_load_funcs
   if [[ $# -eq 0 ]]; then
-    error "Usage: hanif nf \"description\""
+    error "Usage: hanif nf <description>"
+    hint "  hanif nf add login form"
+    hint "  hanif nf \"JIRA-123: add login form\""
     return 1
   fi
   case "${1:-}" in
     help|--help|-h) show_git_help; return 0 ;;
   esac
-  newfeature "$@"
+  # Accept multi-word descriptions without requiring quotes — mirrors how
+  # ``hanif squash`` reads multi-word commit messages. ``"$*"`` joins all
+  # arguments with a single space so:
+  #   hanif nf add login form          → "add login form"
+  #   hanif nf "JIRA-123: add login"   → "JIRA-123: add login"
+  # both produce the same result.
+  newfeature "$*"
 }
 
 git_up_handler()    { _git_load_funcs; _git_help_or_run gitup    "$@"; }
@@ -184,7 +192,7 @@ Usage: hanif <command> [options]
 
 Commands:
   sync                     Full sync (update, rebase, clean)
-  nf, newfeature <desc>    Create feature branch
+  nf, newfeature <desc>    Create feature branch (multi-word, no quotes needed)
   up, update               Update main branch
   upall, updateall         Update all branches
   clean                    Delete branches removed from remote
@@ -193,10 +201,11 @@ Commands:
   pull                     Fetch all + pull
   st, status               Git status
   gi, gitignore <path>     Add to .gitignore & untrack
+  gsetup, git-setup [name] Set up a new git profile (config + SSH key)
 
 Examples:
   hanif sync
-  hanif nf "add feature"
+  hanif nf add login form
   hanif nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
   hanif rb main
@@ -208,10 +217,8 @@ EOF
 }
 
 show_git_help() {
+  print_banner "Git Helper Commands"
   cat <<'EOF'
-┌─────────────────────────────────────────────┐
-│           Git Helper Commands               │
-└─────────────────────────────────────────────┘
 
 SYNC
   Full repository sync - perfect for starting work
@@ -223,11 +230,12 @@ SYNC
 NEWFEATURE (nf)
   Create feature branch with smart naming
   Automatically extracts JIRA/ticket numbers
+  Multi-word descriptions work without quotes
 
-  hanif nf "add login"
+  hanif nf add login
     → feature/add_login
 
-  hanif nf "JIRA-123: fix bug"
+  hanif nf JIRA-123 fix bug
     → feature/jira-123_fix_bug
 
   hanif nf "OM-456 implement feature"
@@ -289,6 +297,22 @@ PULL
   Fetch all remotes and pull
 
   hanif pull
+
+GSETUP (git-setup)
+  One-shot setup for a new git identity (work, personal, freelance, …).
+  Generates an ed25519 SSH key, writes a per-profile gitconfig, and
+  appends an idempotent `includeIf` block to ~/.gitconfig so git
+  picks the right name/email AND ssh key automatically based on
+  which directory the repo lives in.
+
+  hanif gsetup work
+    → asks for repos dir (default ~/code/work), user.name, user.email
+    → creates ~/.ssh/id_ed25519_work
+    → writes ~/.gitconfig-work
+    → appends includeIf block to ~/.gitconfig
+    → prints public key + GitHub / Azure DevOps instructions
+
+  Run `hanif gsetup --help` for full details.
 
 LEGACY SYNTAX
   `hanif git <command>` still works for backward compatibility.

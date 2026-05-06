@@ -57,10 +57,8 @@ EOF
 }
 
 show_bumpversion_help() {
+  print_banner "Version Bumping Tool"
   cat <<'EOF'
-┌─────────────────────────────────────────────┐
-│           Version Bumping Tool              │
-└─────────────────────────────────────────────┘
 
 DESCRIPTION
   A bump2version-compatible version bumping tool built natively
