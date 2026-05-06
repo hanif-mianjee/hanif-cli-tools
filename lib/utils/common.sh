@@ -291,9 +291,97 @@ sed_inplace() {
 }
 
 # ---------------------------------------------------------------------------
+# Cross-platform helpers (clipboard, browser)
+# ---------------------------------------------------------------------------
+
+# Detect the clipboard "copy" tool for the current OS. Echos a single token
+# identifying the backend (pbcopy, xclip, xsel, wl-copy, clip.exe) or empty
+# when none is available. Honours $HANIF_CLIP_COPY for testing/override.
+_hanif_clip_copy_tool() {
+  if [[ -n "${HANIF_CLIP_COPY:-}" ]]; then
+    echo "$HANIF_CLIP_COPY"
+    return 0
+  fi
+  if command_exists pbcopy;  then echo "pbcopy";   return 0; fi
+  if command_exists wl-copy; then echo "wl-copy";  return 0; fi
+  if command_exists xclip;   then echo "xclip";    return 0; fi
+  if command_exists xsel;    then echo "xsel";     return 0; fi
+  if command_exists clip.exe;then echo "clip.exe"; return 0; fi
+  return 1
+}
+
+# Detect the clipboard "paste" tool. Echos a single token or empty.
+_hanif_clip_paste_tool() {
+  if [[ -n "${HANIF_CLIP_PASTE:-}" ]]; then
+    echo "$HANIF_CLIP_PASTE"
+    return 0
+  fi
+  if command_exists pbpaste;  then echo "pbpaste";  return 0; fi
+  if command_exists wl-paste; then echo "wl-paste"; return 0; fi
+  if command_exists xclip;    then echo "xclip";    return 0; fi
+  if command_exists xsel;     then echo "xsel";     return 0; fi
+  if command_exists powershell.exe; then echo "powershell.exe"; return 0; fi
+  return 1
+}
+
+# Copy stdin to the system clipboard. Returns non-zero if no backend found.
+hanif_clip_copy() {
+  local tool
+  if ! tool=$(_hanif_clip_copy_tool); then
+    return 1
+  fi
+  case "$tool" in
+    pbcopy)   pbcopy ;;
+    wl-copy)  wl-copy ;;
+    xclip)    xclip -selection clipboard ;;
+    xsel)     xsel --clipboard --input ;;
+    clip.exe) clip.exe ;;
+    *)        return 1 ;;
+  esac
+}
+
+# Print the system clipboard contents to stdout. Returns non-zero if no
+# backend found.
+hanif_clip_paste() {
+  local tool
+  if ! tool=$(_hanif_clip_paste_tool); then
+    return 1
+  fi
+  case "$tool" in
+    pbpaste)         pbpaste ;;
+    wl-paste)        wl-paste --no-newline ;;
+    xclip)           xclip -selection clipboard -o ;;
+    xsel)            xsel --clipboard --output ;;
+    powershell.exe)  powershell.exe -NoProfile -Command Get-Clipboard ;;
+    *)               return 1 ;;
+  esac
+}
+
+# Open a URL in the user's default browser. Returns non-zero if no opener
+# is available or $HANIF_NO_BROWSER is set (in which case the URL is
+# printed to stdout so the caller can still surface it).
+hanif_open_url() {
+  local url="$1"
+  if [[ -z "$url" ]]; then
+    return 1
+  fi
+  if [[ -n "${HANIF_NO_BROWSER:-}" ]]; then
+    echo "$url"
+    return 0
+  fi
+  if command_exists open;     then open "$url" >/dev/null 2>&1 && return 0; fi
+  if command_exists xdg-open; then xdg-open "$url" >/dev/null 2>&1 & return 0; fi
+  if command_exists wslview;  then wslview "$url" >/dev/null 2>&1 && return 0; fi
+  if command_exists start;    then start "$url" >/dev/null 2>&1 && return 0; fi
+  echo "$url"
+  return 1
+}
+
+# ---------------------------------------------------------------------------
 # Exports — sourced files (and subshells) need access to these.
 # ---------------------------------------------------------------------------
 export -f info success warning error step hint print_banner kv render_table _hanif_render
 export -f command_exists is_git_repo get_current_branch branch_exists
 export -f confirm check_git_version
 export -f sanitize_branch_name sed_inplace
+export -f hanif_clip_copy hanif_clip_paste hanif_open_url

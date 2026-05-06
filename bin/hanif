@@ -90,6 +90,17 @@ Git Commands:
   squash [count]      Interactive commit squashing (default: 20)
   gi <path>           Add to .gitignore & remove from tracking
   gsetup [profile]    Set up a new git profile (config + SSH key)
+  wip [message]       Park work in progress as a WIP commit
+  unwip               Undo the last WIP commit
+  undo                Interactive 'undo the last git thing' menu
+  stash <subcommand>  Friendlier git stash (save/list/pop/drop)
+  pr [url|copy]       Open the current branch's pull request page
+
+Productivity Commands:
+  clip [paste]        Cross-platform clipboard (copy/paste)
+  ip [local|public]   Show local + public IP address
+  ports [PORT|kill]   Inspect / kill processes on TCP ports
+  serve [PORT] [DIR]  One-shot static HTTP server
 
 Other Commands:
   bv [subcommand]     Version bumping (bump2version compatible)
@@ -107,6 +118,9 @@ Examples:
   hanif svg chrome icon.svg
   hanif env set API_KEY=sk-abc123
   hanif gsetup work
+  hanif pr
+  hanif serve 3000
+  hanif ports kill 3000
   hanif help git
 EOF
 }

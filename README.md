@@ -31,12 +31,45 @@ hanif amend "new message"           # Amend last commit with new message
 hanif gi .env                       # Add .env to .gitignore & untrack
 hanif gi node_modules/              # Add node_modules/ to .gitignore & untrack
 hanif gsetup work                   # Set up a new git profile (config + SSH key)
+hanif wip                           # Park changes as "WIP: <timestamp>"
+hanif wip refactor in progress      # Park as "WIP: refactor in progress"
+hanif unwip                         # Undo the last WIP commit (soft reset)
+hanif undo                          # Interactive "undo the last git thing" menu
+hanif stash save "wip on form"      # Friendlier git stash save
+hanif stash list                    # Tabular stash list
+hanif stash pop                     # Pop (interactive picker if >1)
+hanif pr                            # Open the current branch's PR/compare page
+hanif pr url                        # Print the PR URL only
+hanif pr copy                       # Copy the PR URL to the clipboard
 ```
 
 Smart branch naming with `nf`:
 - Extracts ticket numbers (JIRA-123, OM-755, ABC-42)
 - Sanitizes names, converts to lowercase
 - Enforces 60 character limit
+
+## Productivity Commands
+
+```bash
+hanif clip                          # Copy stdin to the system clipboard
+echo foo | hanif clip               # (same — auto-detects pbcopy/xclip/wl-copy/clip.exe)
+hanif clip paste                    # Print clipboard contents to stdout
+hanif ip                            # Show local + public IP and active interface
+hanif ip local                      # Print local IP only
+hanif ip copy public                # Copy public IP to clipboard
+hanif ports                         # List all listening TCP ports
+hanif ports 3000                    # Show what's on a single port
+hanif ports kill 3000               # SIGTERM the process on a port (asks first)
+hanif ports kill 3000 --force       # SIGKILL instead of SIGTERM
+hanif serve                         # Static HTTP server on :8000 in the cwd
+hanif serve 3000 ./dist             # Custom port + directory; prints LAN URL too
+```
+
+`hanif pr` supports GitHub, GitLab (incl. self-hosted + subgroups), Azure DevOps,
+and Bitbucket Cloud. Set `HANIF_NO_BROWSER=1` to print the URL instead of opening
+a browser (handy in SSH sessions). `hanif ip` respects `HANIF_OFFLINE=1` to skip
+the public-IP lookup. `hanif undo` shows only the choices that apply to the current
+repo state and double-confirms destructive actions.
 
 ## Squash Command
 
