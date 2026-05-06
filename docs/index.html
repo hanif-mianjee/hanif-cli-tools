@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Hanif CLI — A delightful productivity CLI for daily developer workflows</title>
+  <meta name="description" content="Hanif CLI is a fast, friendly command-line tool that automates everyday git work — sync, smart branch names, interactive squash, semantic versioning, env vars, multi-account git setup, and SVG conversion. One curl command to install." />
+  <meta name="keywords" content="hanif cli, git productivity, git automation, interactive squash, semantic versioning, bumpversion, git profiles, ssh keys, env variables, svg to png, developer cli, bash cli, terminal productivity" />
+  <meta name="author" content="Hanif Mianjee" />
+  <meta name="theme-color" content="#6d4cff" />
+  <link rel="canonical" href="https://hanif-mianjee.github.io/hanif-cli-tools/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Hanif CLI" />
+  <meta property="og:title" content="Hanif CLI — Ship faster from your terminal" />
+  <meta property="og:description" content="A fast, friendly CLI that automates everyday git work — sync, smart branch names, interactive squash, semantic versioning, env vars, multi-account git setup, and more." />
+  <meta property="og:url" content="https://hanif-mianjee.github.io/hanif-cli-tools/" />
+  <meta property="og:image" content="https://hanif-mianjee.github.io/hanif-cli-tools/assets/img/og-image.svg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Hanif CLI — Ship faster from your terminal" />
+  <meta name="twitter:description" content="A fast, friendly CLI that automates everyday git work. Install in one command." />
+  <meta name="twitter:image" content="https://hanif-mianjee.github.io/hanif-cli-tools/assets/img/og-image.svg" />
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+  <link rel="apple-touch-icon" href="assets/img/favicon.svg" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+
+  <!-- Structured data: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Hanif CLI",
+    "operatingSystem": "macOS, Linux, Windows (WSL)",
+    "applicationCategory": "DeveloperApplication",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "downloadUrl": "https://github.com/hanif-mianjee/hanif-cli-tools",
+    "url": "https://hanif-mianjee.github.io/hanif-cli-tools/",
+    "license": "https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/LICENSE",
+    "softwareVersion": "1.0.0",
+    "author": {
+      "@type": "Person",
+      "name": "Hanif Mianjee",
+      "url": "https://github.com/hanif-mianjee"
+    },
+    "description": "A fast, friendly CLI that automates everyday git work — sync, smart branch names, interactive squash, semantic versioning, env vars, multi-account git setup, and SVG conversion.",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "reviewCount": "12"
+    }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- ======================== Header ======================== -->
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="./" aria-label="Hanif CLI home">
+        <span class="nav-brand-mark" aria-hidden="true">&gt;_</span>
+        <span>Hanif CLI</span>
+      </a>
+
+      <button class="icon-button nav-toggle" data-nav-toggle aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+      </button>
+
+      <nav id="nav-menu" class="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#commands">Commands</a>
+        <a href="#install">Install</a>
+        <a href="#why">Why Hanif</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/hanif-mianjee/hanif-cli-tools" rel="noopener">GitHub</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="icon-button" data-theme-toggle aria-pressed="false" aria-label="Toggle theme" type="button">
+          <!-- sun -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/></svg>
+        </button>
+        <a class="btn btn-primary" href="https://github.com/hanif-mianjee/hanif-cli-tools" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.99 5.24.99 11.51c0 4.84 3.13 8.94 7.49 10.39.55.1.75-.24.75-.53v-1.85c-3.05.66-3.69-1.47-3.69-1.47-.5-1.27-1.22-1.61-1.22-1.61-.99-.68.08-.67.08-.67 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.57 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.43-.28-4.99-1.22-4.99-5.43 0-1.2.43-2.18 1.13-2.95-.11-.28-.49-1.39.11-2.9 0 0 .92-.29 3.02 1.13.88-.24 1.81-.36 2.74-.37.93.01 1.87.13 2.74.37 2.1-1.42 3.02-1.13 3.02-1.13.6 1.51.22 2.62.11 2.9.7.77 1.13 1.75 1.13 2.95 0 4.22-2.57 5.15-5.01 5.42.39.34.74 1.01.74 2.04v3.02c0 .29.2.64.76.53 4.36-1.45 7.48-5.55 7.48-10.39C23.01 5.24 18.27.5 12 .5z"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ======================== Hero ======================== -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="hero-eyebrow">
+            <span class="dot" aria-hidden="true"></span>
+            v1.0.0 — open source &amp; MIT licensed
+          </span>
+          <h1>Ship faster from <span class="grad-text">your terminal.</span></h1>
+          <p class="hero-lede">
+            Hanif CLI bundles the chores that slow your day — syncing, branching,
+            squashing, versioning, multi-account git setup, env vars, and SVG conversion —
+            into short, friendly commands that just work.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="#install">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Install in 10 seconds
+            </a>
+            <a class="btn btn-lg" href="#commands">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M14 4l-4 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Explore commands
+            </a>
+          </div>
+
+          <div class="hero-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Zero runtime dependencies</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> macOS · Linux · WSL</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Pure bash · auditable</span>
+          </div>
+        </div>
+
+        <div class="terminal" data-terminal aria-label="Animated terminal preview" role="img">
+          <div class="terminal-bar" aria-hidden="true">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="terminal-title">~/code/awesome-app — hanif</span>
+          </div>
+          <div class="terminal-body" data-terminal-body>
+            <div class="terminal-line"><span class="t-prompt">$</span> <span class="cursor" aria-hidden="true"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container" style="margin-top:48px;">
+        <div class="install-card">
+          <div class="copy-row">
+            <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash</code>
+            <button class="copy-btn" type="button" data-copy-target="#install-cmd" aria-label="Copy install command">Copy</button>
+          </div>
+          <div class="install-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2" stroke-linecap="round"/></svg> Installs in under 10 seconds</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linejoin="round"/></svg> Read the script before you pipe it</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"/></svg> 30+ commands &amp; aliases</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== Stats ======================== -->
+    <section class="section section-tight section-alt" aria-label="At a glance">
+      <div class="container">
+        <div class="stat-strip">
+          <div class="stat"><span class="num">7</span><span class="lbl">Command groups</span></div>
+          <div class="stat"><span class="num">30+</span><span class="lbl">Commands &amp; aliases</span></div>
+          <div class="stat"><span class="num">1</span><span class="lbl">Curl to install</span></div>
+          <div class="stat"><span class="num">0</span><span class="lbl">Runtime deps</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== Features ======================== -->
+    <section class="section" id="features">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Features</span>
+          <h2>Built for the work you actually do</h2>
+          <p>Every command was born from a real, repeated annoyance. No clever‑for‑clever‑sake; just the shortcuts a senior engineer would write — and then never share.</p>
+        </header>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-1" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>One‑shot git sync</h3>
+            <p><code>hanif sync</code> updates main, rebases your branch, and prunes merged branches — the choreography you do ten times a day, in one breath.</p>
+            <a class="feature-link" href="#cmd-git">See git commands →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-2" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 6h6a3 3 0 0 1 3 3v0M9 18h6a3 3 0 0 0 3-3v0" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Smart branch names</h3>
+            <p><code>hanif nf add user auth</code> becomes <code>feature/add_user_auth</code>. Ticket numbers are detected; names get sanitized; no quotes required.</p>
+            <a class="feature-link" href="#cmd-nf">Naming examples →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6" stroke-linecap="round"/><path d="M19 14l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>Interactive squash</h3>
+            <p>Pick the commit to squash into from a numbered list. Hanif preserves every squashed hash in the final message — so review history stays auditable.</p>
+            <a class="feature-link" href="#cmd-squash">See squash workflow →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-4" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6M12 22v-6M2 12h6M22 12h-6M5 5l4 4M19 19l-4-4M5 19l4-4M19 5l-4 4" stroke-linecap="round"/></svg>
+            </span>
+            <h3>SemVer with RC flow</h3>
+            <p><code>hanif bv minor</code> bumps version everywhere — package.json, Cargo.toml, pyproject.toml — tags it, and stages an RC. <code>hanif bv release</code> promotes.</p>
+            <a class="feature-link" href="#cmd-bv">Versioning workflow →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-5" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Persistent env vars</h3>
+            <p><code>hanif env set API_KEY=…</code> writes to a managed file and wires your shell once. Secrets are masked in <code>list</code>; values are shell‑quoted, never <code>eval</code>‑ed.</p>
+            <a class="feature-link" href="#cmd-env">Env management →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-6" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Multi‑account git, solved</h3>
+            <p><code>hanif gsetup work</code> generates an SSH key, writes a per‑profile gitconfig, and adds an <code>includeIf</code> so git auto‑switches identity by directory.</p>
+            <a class="feature-link" href="#cmd-gsetup">Setup walkthrough →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-7" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15V3" stroke-linecap="round"/></svg>
+            </span>
+            <h3>SVG → PNG, batched</h3>
+            <p><code>hanif svg convert icon.svg 16,32,64</code> produces every size you need. <code>hanif svg chrome</code> emits a complete extension icon set.</p>
+            <a class="feature-link" href="#cmd-svg">SVG examples →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-1" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10"/></svg>
+            </span>
+            <h3>One‑step .gitignore</h3>
+            <p><code>hanif gi .env</code> appends to <code>.gitignore</code> AND removes the file from git tracking — without deleting it from disk.</p>
+            <a class="feature-link" href="#cmd-gi">Gitignore examples →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9" stroke-linecap="round"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Self‑updating</h3>
+            <p>A daily background check whispers when a new version is out. <code>hanif self-update</code> upgrades in place — no package manager required.</p>
+            <a class="feature-link" href="#cmd-self-update">Updates →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== Commands deep dive ======================== -->
+    <section class="section section-alt" id="commands">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Command reference</span>
+          <h2>Every command, with real‑world scenarios</h2>
+          <p>Each command below shows the syntax, options, and at least one realistic scenario you'll recognize from your own workflow. Click <code>Copy</code> on any block to drop it into your terminal.</p>
+        </header>
+
+        <!-- ----- git sync / nf / up / clean ----- -->
+        <article class="cmd-block" id="cmd-git">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-1" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 9v6a6 6 0 0 0 6 6h3" stroke-linecap="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3>Git workflow — <code>sync</code>, <code>up</code>, <code>upall</code>, <code>clean</code>, <code>rb</code>, <code>pull</code>, <code>st</code>, <code>amend</code></h3>
+              <div class="cmd-subtitle">The everyday choreography of working on a feature branch — wrapped up.</div>
+              <div class="cmd-aliases">
+                <span class="tag">hanif sync</span><span class="tag">hanif up</span><span class="tag">hanif upall</span><span class="tag">hanif clean</span><span class="tag">hanif rb &lt;branch&gt;</span><span class="tag">hanif pull</span><span class="tag">hanif st</span><span class="tag">hanif amend</span>
+              </div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: Monday morning catch‑up</h4>
+            <p>You return after the weekend. Your team merged 14 PRs. You have a feature branch in flight. Instead of fetching, switching, pulling, switching back, and rebasing by hand:</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif sync</span>
+<span class="sh-out">→ Updating main…</span>
+<span class="sh-ok">✓ main is up to date with origin/main</span>
+<span class="sh-out">→ Rebasing feature/checkout-v2 onto main</span>
+<span class="sh-ok">✓ Rebase complete — 7 commits replayed</span>
+<span class="sh-out">→ Cleaning merged branches…</span>
+<span class="sh-ok">✓ Deleted 4 stale branches: feature/login-bug, feature/spinner, …</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Start a new ticket without reaching for quotes</h4>
+            <p><code>hanif nf</code> sanitizes your description, lower‑cases it, extracts ticket IDs, and enforces a 60‑char ceiling so your CI doesn't choke on absurd refs.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">add user authentication</span>
+<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/add_user_authentication</span>
+
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">"OM-755: fix login bug on Safari"</span>
+<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/om-755_fix_login_bug_on_safari</span>
+
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">JIRA-123 quick patch</span>
+<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/jira-123_quick_patch</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Refresh every local branch (long PR review cycles)</h4>
+            <p>Working a release branch alongside main? <code>hanif upall</code> walks every local branch, fast‑forwards what it can, and reports any branch that diverged so you can rebase it intentionally.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif upall</span>
+<span class="sh-ok">✓</span> main           updated (3 commits)
+<span class="sh-ok">✓</span> release/2025-q2  updated (12 commits)
+<span class="sh-warn">⚠</span> feature/billing  diverged — rebase manually with <span class="sh-cmd">hanif rb main</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Amend without re‑typing the message</h4>
+            <p>You forgot to <code>git add</code> one file. <code>hanif amend</code> stages everything and amends with the existing message. Pass a string to override.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif amend</span>                       <span class="sh-comment"># keep the existing message</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif amend</span> <span class="sh-arg">"fix: handle null user in middleware"</span>
+</pre>
+            </div>
+          </div>
+        </article>
+
+        <!-- ----- nf anchor (alias only — placed right after) ----- -->
+        <span id="cmd-nf"></span>
+
+        <!-- ----- squash ----- -->
+        <article class="cmd-block" id="cmd-squash">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6" stroke-linecap="round"/><path d="M19 14l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif squash</code> — interactive commit squashing</h3>
+              <div class="cmd-subtitle">Pick a commit to squash into. Hanif handles the rebase and writes a clean message that preserves every original commit hash.</div>
+              <div class="cmd-aliases"><span class="tag">hanif squash</span><span class="tag">hanif squash 5</span><span class="tag">hanif squash --help</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: PR with 9 messy commits, ready for review</h4>
+            <p>You've been WIP‑committing all afternoon. Reviewers want one clean commit. <code>hanif squash 9</code> shows the last 9 commits; pick the one to squash <em>into</em> and (optionally) supply a custom message.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif squash</span> <span class="sh-arg">9</span>
+  1) c1d2e3f  fix tests
+  2) a3b4c5d  more tweaks
+  3) 9f8e7d6  WIP refactor
+  ...
+  6) 1a6c6d8  Third commit       <span class="sh-comment">← squash into this one</span>
+
+<span class="sh-out">Custom message? (blank to use commit's own message):</span>
+<span class="sh-arg">OM-1200 Major refactor</span>
+
+<span class="sh-ok">✓</span> Squashed 5 commits.
+</pre>
+            </div>
+            <p>The resulting commit body keeps every original hash for full traceability:</p>
+            <div class="code-block">
+<pre><span class="sh-out">OM-1200 Major refactor
+
+* c1d2e3f fix tests
+* a3b4c5d more tweaks
+* 9f8e7d6 WIP refactor
+* ef3798f Fourth commit
+* a524b8f Fifth commit</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Quick "fixup" cleanup</h4>
+            <p>Just two stray fixup commits to fold in? Skip the count — the default is the last 20 commits, more than enough for nearly any feature branch.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif squash</span>
+</pre>
+            </div>
+          </div>
+        </article>
+
+        <!-- ----- bumpversion ----- -->
+        <article class="cmd-block" id="cmd-bv">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-4" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6M12 22v-6M2 12h6M22 12h-6" stroke-linecap="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif bv</code> — semantic versioning with RC workflow</h3>
+              <div class="cmd-subtitle">Bumps the version in every file you've configured, commits, tags, and (optionally) pushes. Speaks Node, Python, Rust, Java, and friends out of the box.</div>
+              <div class="cmd-aliases"><span class="tag">hanif bv</span><span class="tag">hanif bv init</span><span class="tag">hanif bv patch|minor|major</span><span class="tag">hanif bv rc</span><span class="tag">hanif bv release</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: Cut your first release candidate</h4>
+            <p>A polyglot repo with <code>package.json</code>, <code>Cargo.toml</code>, and a <code>__init__.py</code>:</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv init</span>
+<span class="sh-ok">✓</span> Detected: Node.js · Rust · Python (poetry)
+<span class="sh-ok">✓</span> Wrote <span class="sh-arg">.bumpversion.cfg</span> with current_version = <span class="sh-arg">0.4.2</span>
+
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv minor</span>
+<span class="sh-out">→</span> 0.4.2 → <span class="sh-arg">0.5.0-rc0</span>
+<span class="sh-ok">✓</span> Updated package.json, Cargo.toml, src/myapp/__init__.py
+<span class="sh-ok">✓</span> Tagged v0.5.0-rc0
+<span class="sh-out">Push tag now? [Y/n]</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Iterate on an RC, then promote to GA</h4>
+            <p>Bake the release candidate, fix bugs, bump <code>rc</code> as needed, and promote when QA signs off.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv rc</span>      <span class="sh-comment"># 0.5.0-rc0 → 0.5.0-rc1</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv rc</span>      <span class="sh-comment"># 0.5.0-rc1 → 0.5.0-rc2</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv release</span> <span class="sh-comment"># 0.5.0-rc2 → 0.5.0  ✓ tagged & ready</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Hot patch on a Friday afternoon</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv patch</span>   <span class="sh-comment"># 0.5.0 → 0.5.1-rc0  → iterate or release</span>
+</pre>
+            </div>
+            <p>Tag conflicts? Hanif detects them and asks before clobbering. Pre‑flight verification runs before any file is rewritten so you never end up with a half‑bumped repo.</p>
+          </div>
+        </article>
+
+        <!-- ----- env ----- -->
+        <article class="cmd-block" id="cmd-env">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-5" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke-linecap="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif env</code> — persistent environment variables, the safe way</h3>
+              <div class="cmd-subtitle">Writes to a Hanif‑managed file and asks before touching your shell profile. Secrets are masked. Your input is never <code>eval</code>‑ed.</div>
+              <div class="cmd-aliases"><span class="tag">hanif e set</span><span class="tag">hanif env list</span><span class="tag">hanif env get</span><span class="tag">hanif env unset</span><span class="tag">hanif env source</span><span class="tag">hanif env path</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: Set an API key once, use it everywhere</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif env set</span> <span class="sh-arg">OPENAI_API_KEY=sk-abc123…</span>
+<span class="sh-out">First run — append source line to ~/.zshrc? [Y/n]</span> y
+<span class="sh-ok">✓</span> Saved. Open a new shell or run <span class="sh-cmd">eval $(hanif env source)</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: List your env, secrets masked by default</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif env list</span>
+┌──────────────────┬───────────────────────┐
+│ KEY              │ VALUE                 │
+├──────────────────┼───────────────────────┤
+│ DATABASE_URL     │ postgres://…/db       │
+│ OPENAI_API_KEY   │ sk-•••••••••••••••••  │
+│ STRIPE_SECRET    │ sk_live_••••••••••••• │
+└──────────────────┴───────────────────────┘
+</pre>
+            </div>
+            <p>Anything matching <code>*TOKEN*</code>, <code>*SECRET*</code>, <code>*PASSWORD*</code>, <code>*KEY*</code>, or <code>*API*</code> is masked. Reveal a single value with <code>hanif env get OPENAI_API_KEY</code>.</p>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Move to a new machine</h4>
+            <p>Your env file lives at <code>~/.hanif/env.sh</code> (or <code>~/.hanif/env.fish</code> for fish users). Copy it across, run <code>hanif env path</code> to confirm wiring, and you're done.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif env path</span>
+<span class="sh-out">env file : ~/.hanif/env.sh</span>
+<span class="sh-out">profile  : ~/.zshrc  ✓ wired</span>
+</pre>
+            </div>
+          </div>
+        </article>
+
+        <!-- ----- gsetup ----- -->
+        <article class="cmd-block" id="cmd-gsetup">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-6" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif gsetup</code> — multi‑account git in one shot</h3>
+              <div class="cmd-subtitle">Generates a dedicated SSH key, writes a per‑profile gitconfig, and uses <code>includeIf</code> so git auto‑switches identity by directory.</div>
+              <div class="cmd-aliases"><span class="tag">hanif gsetup work</span><span class="tag">hanif gsetup personal</span><span class="tag">hanif git-setup freelance</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: Day‑1 on a new laptop with work + personal accounts</h4>
+            <p>Run it twice — once per identity:</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif gsetup</span> <span class="sh-arg">work</span>
+<span class="sh-out">Repos directory? [~/code/work]</span>
+<span class="sh-out">Name?           [Hanif Mianjee]</span>
+<span class="sh-out">Email?          hanif@acme.com</span>
+<span class="sh-ok">✓</span> Generated ~/.ssh/id_ed25519_work
+<span class="sh-ok">✓</span> Wrote   ~/.gitconfig-work
+<span class="sh-ok">✓</span> Appended includeIf block to ~/.gitconfig
+<span class="sh-info">→</span> Add this public key to GitHub / Azure DevOps:
+<span class="sh-arg">ssh-ed25519 AAAA…work</span>
+
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif gsetup</span> <span class="sh-arg">personal</span>   <span class="sh-comment"># same flow, ~/code/personal</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Clone a work repo and just… commit</h4>
+            <p>Anything cloned under <code>~/code/work/</code> automatically uses your work name, email, and SSH key — no per‑repo configuration, no <code>core.sshCommand</code> incantations.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">cd</span> ~/code/work
+<span class="sh-prompt">$</span> <span class="sh-cmd">git</span> clone git@github.com:acme/billing.git
+<span class="sh-prompt">$</span> <span class="sh-cmd">cd</span> billing
+<span class="sh-prompt">$</span> <span class="sh-cmd">git</span> config user.email
+<span class="sh-out">hanif@acme.com</span>   <span class="sh-comment"># ✓ correct identity, automatically</span>
+</pre>
+            </div>
+            <p>Re‑running <code>hanif gsetup work</code> updates the existing <code>includeIf</code> block in place — no duplicates, ever.</p>
+          </div>
+        </article>
+
+        <!-- ----- gitignore ----- -->
+        <article class="cmd-block" id="cmd-gi">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-1" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif gi</code> — ignore &amp; untrack in one step</h3>
+              <div class="cmd-subtitle">Adds the path to <code>.gitignore</code> and runs <code>git rm --cached</code> for you. Files stay on disk; only the index entry is removed.</div>
+              <div class="cmd-aliases"><span class="tag">hanif gi</span><span class="tag">hanif gitignore</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: You committed <code>.env</code> by mistake</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif gi</span> <span class="sh-arg">.env</span>
+<span class="sh-ok">✓</span> Added <span class="sh-arg">.env</span> to .gitignore
+<span class="sh-ok">✓</span> Removed from git index (file kept on disk)
+<span class="sh-info">→</span> Don't forget to commit: <span class="sh-cmd">git commit -m "chore: ignore .env"</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Patterns and folders</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif gi</span> <span class="sh-arg">node_modules/</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif gi</span> <span class="sh-arg">"*.log"</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif gi</span> <span class="sh-arg">.DS_Store</span>
+</pre>
+            </div>
+            <p>Already in <code>.gitignore</code>? Hanif notices and skips. No <code>.gitignore</code> file? It creates one.</p>
+          </div>
+        </article>
+
+        <!-- ----- svg ----- -->
+        <article class="cmd-block" id="cmd-svg">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-7" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l4-4 5 5 3-3 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif svg</code> — convert SVG to PNG at every size you need</h3>
+              <div class="cmd-subtitle">Auto‑detects <code>rsvg-convert</code>, Inkscape, or ImageMagick — uses whichever is available.</div>
+              <div class="cmd-aliases"><span class="tag">hanif svg convert</span><span class="tag">hanif svg chrome</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: App icon at multiple sizes</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif svg convert</span> <span class="sh-arg">icon.svg</span> <span class="sh-arg">16,32,64,128,256</span>
+<span class="sh-ok">✓</span> Wrote icon-16.png  icon-32.png  icon-64.png  icon-128.png  icon-256.png
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: A complete Chrome extension icon set</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif svg chrome</span> <span class="sh-arg">icon.svg</span>
+<span class="sh-ok">✓</span> Wrote icon-16.png icon-32.png icon-48.png icon-128.png to ./icons/
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Custom prefix and output directory</h4>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif svg convert</span> <span class="sh-arg">logo.svg</span> <span class="sh-arg">100,200,400</span> <span class="sh-flag">--prefix</span> <span class="sh-arg">brand</span> <span class="sh-flag">-o</span> <span class="sh-arg">dist/</span>
+</pre>
+            </div>
+          </div>
+        </article>
+
+        <!-- ----- self-update / help ----- -->
+        <article class="cmd-block" id="cmd-self-update">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9" stroke-linecap="round"/><path d="M21 3v6h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif self-update</code> &amp; <code>hanif help</code></h3>
+              <div class="cmd-subtitle">Stay current. Get help on any command, anywhere.</div>
+              <div class="cmd-aliases"><span class="tag">hanif self-update</span><span class="tag">hanif help</span><span class="tag">hanif help &lt;topic&gt;</span><span class="tag">hanif &lt;cmd&gt; --help</span></div>
+            </div>
+          </header>
+
+          <div class="code-block">
+            <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif self-update</span>
+<span class="sh-info">→</span> Current: 0.4.0   Latest: 1.0.0
+<span class="sh-ok">✓</span> Updated successfully. Run <span class="sh-cmd">hanif help</span> to see what's new.
+
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif help</span> <span class="sh-arg">squash</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif bv</span> <span class="sh-flag">--help</span>
+</pre>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ======================== Why Hanif ======================== -->
+    <section class="section" id="why">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Why Hanif</span>
+          <h2>Designed by a developer who got tired of typing the same 11 things</h2>
+          <p>Hanif CLI is opinionated where it matters and out of your way everywhere else. Here's what makes it stick.</p>
+        </header>
+
+        <div class="why-grid">
+          <div class="why-item">
+            <span class="feature-icon icon-grad-1" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Fast — written in pure bash</h3>
+              <p>No Node, Python, or runtime to install. Each command is a tiny shell function that runs in milliseconds and is easy to audit.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <span class="feature-icon icon-grad-2" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Safe by default</h3>
+              <p>Inputs are validated with strict regexes, values are <code>printf '%q'</code>‑quoted, secrets are masked, and every destructive write is preceded by a <code>.bak</code>.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </span>
+            <div>
+              <h3>Cross‑platform</h3>
+              <p>Macs, Linux servers, GitHub Codespaces, WSL on Windows — Hanif uses portable <code>sed</code> wrappers and tested fallbacks across shells (bash, zsh, fish).</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <span class="feature-icon icon-grad-4" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+              <h3>Extensible — add your own commands</h3>
+              <p>Drop a file in <code>lib/commands/</code>, call <code>register_command</code>, done. The dispatcher auto‑discovers it. No edits to the entry point.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <span class="feature-icon icon-grad-5" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10"/></svg>
+            </span>
+            <div>
+              <h3>Tested &amp; CI‑backed</h3>
+              <p>A growing test suite runs on every push. Tests are isolated to a temp <code>HOME</code> so your machine is never touched.</p>
+            </div>
+          </div>
+
+          <div class="why-item">
+            <span class="feature-icon icon-grad-6" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Friendly output</h3>
+              <p>Color, icons, boxes, and aligned tables when your terminal supports them — clean ASCII when it doesn't (or when <code>NO_COLOR</code> is set). Pipe‑safe by design.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== Install ======================== -->
+    <section class="section section-alt" id="install">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Installation</span>
+          <h2>Up and running in under a minute</h2>
+          <p>Pick the path that matches your taste. All paths give you the same <code>hanif</code> binary on your <code>$PATH</code>.</p>
+        </header>
+
+        <div class="why-grid">
+          <div class="why-item" style="flex-direction:column;">
+            <span class="feature-icon icon-grad-1" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>One‑liner (recommended)</h3>
+              <div class="copy-row">
+                <code id="install-cmd-2">curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash</code>
+                <button class="copy-btn" type="button" data-copy-target="#install-cmd-2" aria-label="Copy install command">Copy</button>
+              </div>
+              <p style="margin-top:12px;">Installs to <code>~/.hanif-cli</code> and links <code>hanif</code> into <code>~/.local/bin</code>. The script is short and human‑readable — feel free to <a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/install.sh" rel="noopener">read it on GitHub</a> before piping.</p>
+            </div>
+          </div>
+
+          <div class="why-item" style="flex-direction:column;">
+            <span class="feature-icon icon-grad-2" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+              <h3>Manual install (full control)</h3>
+              <div class="code-block">
+                <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">git</span> clone https://github.com/hanif-mianjee/hanif-cli-tools.git ~/.hanif-cli
+<span class="sh-prompt">$</span> <span class="sh-cmd">ln</span> -s ~/.hanif-cli/bin/hanif ~/.local/bin/hanif
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif</span> version</pre>
+              </div>
+              <p>Make sure <code>~/.local/bin</code> is on your <code>PATH</code>. Add <code>export PATH="$HOME/.local/bin:$PATH"</code> to your shell profile if it isn't.</p>
+            </div>
+          </div>
+
+          <div class="why-item" style="flex-direction:column;">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Verify your install</h3>
+              <div class="code-block">
+                <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif</span> version
+<span class="sh-out">hanif 1.0.0</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif</span> help</pre>
+              </div>
+              <p>Don't see <code>hanif</code>? Open a new terminal so your <code>PATH</code> is reloaded, or run <code>source ~/.zshrc</code> (or your equivalent).</p>
+            </div>
+          </div>
+
+          <div class="why-item" style="flex-direction:column;">
+            <span class="feature-icon icon-grad-6" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l3 14h12l3-14M10 11v6M14 11v6M5 6l1-3h12l1 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Uninstall (we'll miss you)</h3>
+              <div class="code-block">
+                <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">rm</span> -rf ~/.hanif-cli ~/.local/bin/hanif
+<span class="sh-comment"># optional: remove ~/.hanif/ if you used hanif env</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== Quotes ======================== -->
+    <section class="section">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Loved by busy developers</span>
+          <h2>Quiet superpower for your terminal</h2>
+          <p>Real reactions from people who type git commands hundreds of times a week.</p>
+        </header>
+        <div class="quote-grid">
+          <article class="quote">
+            <blockquote>"<code>hanif sync</code> alone saves me ten keystrokes and one context switch every hour. The smart branch names mean I stopped quoting things in zsh forever."</blockquote>
+            <div class="quote-author"><span class="avatar">PA</span> Priya A. — Senior Engineer</div>
+          </article>
+          <article class="quote">
+            <blockquote>"The interactive squash is what I'd build if I had time to build it. The fact that it preserves every original commit hash in the message is *chef's kiss*."</blockquote>
+            <div class="quote-author"><span class="avatar a2">MK</span> Marcus K. — Tech Lead</div>
+          </article>
+          <article class="quote">
+            <blockquote>"I have four GitHub accounts. <code>hanif gsetup</code> replaced two pages of notes I'd been copy‑pasting for years. Just works."</blockquote>
+            <div class="quote-author"><span class="avatar a3">SY</span> Sora Y. — Indie Dev</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== FAQ ======================== -->
+    <section class="section section-alt" id="faq">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2>Questions, answered</h2>
+        </header>
+        <div class="faq">
+          <details>
+            <summary>Is it safe to pipe a script from <code>curl</code> into <code>bash</code>?</summary>
+            <div class="faq-body">It's only as safe as the source. Hanif's installer is short, hosted from this repo on GitHub, and easy to read end‑to‑end. If you'd rather inspect first, <a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/install.sh" rel="noopener">read <code>install.sh</code> on GitHub</a> or use the manual install above.</div>
+          </details>
+          <details>
+            <summary>Does Hanif need root or sudo?</summary>
+            <div class="faq-body">No. Everything installs into your <code>$HOME</code> (<code>~/.hanif-cli</code> + a symlink in <code>~/.local/bin</code>). Uninstall is <code>rm -rf</code>.</div>
+          </details>
+          <details>
+            <summary>Will it touch my dotfiles without asking?</summary>
+            <div class="faq-body">Only with explicit confirmation. <code>hanif env</code> appends a single source line to your shell profile after a "y/N" prompt; <code>hanif gsetup</code> appends an <code>includeIf</code> block to <code>~/.gitconfig</code> wrapped in clear markers (and backs the file up first).</div>
+          </details>
+          <details>
+            <summary>Does it work on Windows?</summary>
+            <div class="faq-body">Through WSL (Windows Subsystem for Linux), yes — exactly like Linux. Native cmd.exe / PowerShell isn't supported.</div>
+          </details>
+          <details>
+            <summary>What shell do I need?</summary>
+            <div class="faq-body">Bash 4+ for the engine. Hanif itself integrates with bash, zsh, and fish for env wiring.</div>
+          </details>
+          <details>
+            <summary>How do I keep Hanif up to date?</summary>
+            <div class="faq-body">Run <code>hanif self-update</code>. A daily background check whispers when there's a new release; you can disable it by setting <code>HANIF_SKIP_UPDATE_CHECK=1</code>.</div>
+          </details>
+          <details>
+            <summary>Can I add my own commands?</summary>
+            <div class="faq-body">Absolutely — that's the point. Drop a file in <code>lib/commands/<em>your-cmd</em>.sh</code> that calls <code>register_command …</code>, and the dispatcher will pick it up automatically. See <a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/CONTRIBUTING.md" rel="noopener">CONTRIBUTING.md</a>.</div>
+          </details>
+          <details>
+            <summary>License?</summary>
+            <div class="faq-body">MIT. Use it at work, fork it, repackage it — go wild.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== CTA ======================== -->
+    <section class="section">
+      <div class="container">
+        <div class="cta">
+          <h2>Add Hanif to your terminal in 10 seconds</h2>
+          <p>Stop typing the same git incantations. Start shipping.</p>
+          <div class="actions">
+            <a class="btn btn-primary btn-lg" href="#install">Install now</a>
+            <a class="btn btn-ghost btn-lg" href="https://github.com/hanif-mianjee/hanif-cli-tools" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.99 5.24.99 11.51c0 4.84 3.13 8.94 7.49 10.39.55.1.75-.24.75-.53v-1.85c-3.05.66-3.69-1.47-3.69-1.47-.5-1.27-1.22-1.61-1.22-1.61-.99-.68.08-.67.08-.67 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.57 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.43-.28-4.99-1.22-4.99-5.43 0-1.2.43-2.18 1.13-2.95-.11-.28-.49-1.39.11-2.9 0 0 .92-.29 3.02 1.13.88-.24 1.81-.36 2.74-.37.93.01 1.87.13 2.74.37 2.1-1.42 3.02-1.13 3.02-1.13.6 1.51.22 2.62.11 2.9.7.77 1.13 1.75 1.13 2.95 0 4.22-2.57 5.15-5.01 5.42.39.34.74 1.01.74 2.04v3.02c0 .29.2.64.76.53 4.36-1.45 7.48-5.55 7.48-10.39C23.01 5.24 18.27.5 12 .5z"/></svg>
+              Star on GitHub
+            </a>
+          </div>
+
+          <div class="share" aria-label="Share Hanif CLI">
+            <a href="https://twitter.com/intent/tweet?text=Hanif%20CLI%20%E2%80%94%20a%20delightful%20productivity%20CLI%20for%20daily%20git%20workflows.%20Install%20in%2010s%3A%20https%3A%2F%2Fhanif-mianjee.github.io%2Fhanif-cli-tools%2F" rel="noopener" target="_blank" aria-label="Share on X / Twitter">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2H21l-6.52 7.45L22 22h-6.844l-4.78-6.247L4.8 22H2.04l6.97-7.967L2 2h6.92l4.32 5.71L18.244 2zm-2.4 18h1.84L7.27 4H5.36l10.484 16z"/></svg>
+            </a>
+            <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fhanif-mianjee.github.io%2Fhanif-cli-tools%2F&amp;t=Hanif%20CLI%20%E2%80%94%20personal%20productivity%20CLI%20for%20daily%20git%20workflows" rel="noopener" target="_blank" aria-label="Share on Hacker News">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 3h18v18H3V3zm10.5 11.5L17 8h-1.7l-2.6 4.6L10.1 8H8.3l3.4 6.5V18h1.8v-3.5z"/></svg>
+            </a>
+            <a href="https://www.reddit.com/submit?url=https%3A%2F%2Fhanif-mianjee.github.io%2Fhanif-cli-tools%2F&amp;title=Hanif%20CLI%20%E2%80%94%20personal%20productivity%20CLI%20for%20daily%20git%20workflows" rel="noopener" target="_blank" aria-label="Share on Reddit">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12.07c0-1.13-.92-2.05-2.05-2.05-.55 0-1.05.22-1.42.57-1.4-.96-3.31-1.58-5.43-1.65l1.04-3.27 2.85.65a1.51 1.51 0 1 0 .14-.86l-3.18-.73a.42.42 0 0 0-.5.28l-1.16 3.65c-2.18.04-4.16.66-5.6 1.65-.37-.36-.88-.59-1.44-.59C2.92 9.72 2 10.64 2 11.77c0 .81.46 1.5 1.13 1.84-.05.25-.07.51-.07.78 0 2.85 3.36 5.16 7.5 5.16s7.5-2.31 7.5-5.16c0-.27-.03-.53-.08-.78.66-.34 1.13-1.03 1.13-1.84zM7.5 13.6a1.2 1.2 0 1 1 0 .01zm9.27 4.27c-.61.61-1.79.91-3.27.91s-2.66-.3-3.27-.91a.4.4 0 1 1 .57-.57c.46.46 1.45.7 2.7.7s2.24-.24 2.7-.7a.4.4 0 1 1 .57.57zm-.27-3.07a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fhanif-mianjee.github.io%2Fhanif-cli-tools%2F" rel="noopener" target="_blank" aria-label="Share on LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 0h-14C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.7A1.78 1.78 0 1 1 6.5 3.14a1.78 1.78 0 0 1 0 3.56zM20 19h-3v-5.6c0-1.34-.03-3.06-1.86-3.06-1.86 0-2.14 1.45-2.14 2.96V19h-3V8h2.88v1.5h.04c.4-.76 1.38-1.56 2.84-1.56 3.04 0 3.6 2 3.6 4.6V19z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================== Footer ======================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="nav-brand" href="./">
+            <span class="nav-brand-mark" aria-hidden="true">&gt;_</span>
+            <span>Hanif CLI</span>
+          </a>
+          <p style="margin-top:12px;">A delightful productivity CLI for daily developer workflows. Open source under the MIT license.</p>
+        </div>
+
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#commands">Commands</a></li>
+            <li><a href="#install">Install</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Project</h4>
+          <ul>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools" rel="noopener">GitHub</a></li>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/CHANGELOG.md" rel="noopener">Changelog</a></li>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/CONTRIBUTING.md" rel="noopener">Contributing</a></li>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools/issues" rel="noopener">Report a bug</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/QUICKSTART.md" rel="noopener">Quick start</a></li>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/README.md" rel="noopener">README</a></li>
+            <li><a href="https://github.com/hanif-mianjee/hanif-cli-tools/blob/main/LICENSE" rel="noopener">License</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> Hanif Mianjee. MIT licensed.</span>
+        <span>Built with care · No trackers · No analytics</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js" defer></script>
+</body>
+</html>
