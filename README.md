@@ -4,6 +4,9 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/hanif-mianjee/hanif-cli-tools)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Website](https://img.shields.io/badge/website-hanif--mianjee.github.io-6d4cff.svg)](https://hanif-mianjee.github.io/hanif-cli-tools/)
+
+🌐 **Website:** <https://hanif-mianjee.github.io/hanif-cli-tools/> — full command reference, scenarios, and install guide.
 
 ## Installation
 
