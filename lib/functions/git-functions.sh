@@ -86,10 +86,17 @@ gitclean() {
   git fetch -p || { error "Failed to fetch"; return 1; }
 
   info "Checking for local branches that were deleted from remote…"
+
+  # Collect outcomes so we can render a summary table at the end.
+  local -a summary_rows=()
+  local deleted_count=0 kept_count=0 protected_count=0
+
   for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
     # Skip protected branches
     if [[ " ${protected_branches[*]} " =~ " ${branch} " ]]; then
       hint "  ⛔  Skipping protected branch: $branch"
+      summary_rows+=("$(printf '%s\t%s\t%s' "$branch" "protected" "kept (protected)")")
+      protected_count=$((protected_count + 1))
       continue
     fi
 
@@ -97,6 +104,8 @@ gitclean() {
     local upstream=$(git rev-parse --abbrev-ref "$branch@{upstream}" 2>/dev/null)
     if [[ -z "$upstream" ]]; then
       hint "  •  Keeping local-only branch: $branch"
+      summary_rows+=("$(printf '%s\t%s\t%s' "$branch" "local-only" "kept (no upstream)")")
+      kept_count=$((kept_count + 1))
       continue
     fi
 
@@ -104,10 +113,24 @@ gitclean() {
     if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
       warning "Deleting branch (gone from remote): $branch"
       git branch -D "$branch"
+      summary_rows+=("$(printf '%s\t%s\t%s' "$branch" "gone" "deleted")")
+      deleted_count=$((deleted_count + 1))
     else
       hint "  ✓  Keeping active branch: $branch"
+      summary_rows+=("$(printf '%s\t%s\t%s' "$branch" "active" "kept")")
+      kept_count=$((kept_count + 1))
     fi
   done
+
+  # Render summary table.
+  if [[ ${#summary_rows[@]} -gt 0 ]]; then
+    echo ""
+    print_banner "Branch Cleanup Summary"
+    echo ""
+    printf '%s\n' "${summary_rows[@]}" | render_table "BRANCH|UPSTREAM|RESULT"
+    echo ""
+    success "Done — $deleted_count deleted, $kept_count kept, $protected_count protected"
+  fi
 }
 
 # newfeature - Create a new feature branch with smart naming

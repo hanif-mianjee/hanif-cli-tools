@@ -41,6 +41,12 @@ show_help() {
     svg)
       show_svg_help
       ;;
+    env|e)
+      show_env_help
+      ;;
+    gsetup|git-setup)
+      show_git_setup_help
+      ;;
     # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       show_git_help
@@ -74,10 +80,12 @@ GIT COMMANDS
   amend ["message"]    Amend last commit with current changes
   squash [count]       Interactive commit squashing (default: 20)
   gi <path>            Add to .gitignore & remove from tracking
+  gsetup [profile]     Set up a new git profile (config + SSH key)
 
 OTHER COMMANDS
   bv [subcommand]      Version bumping (bump2version compatible)
   svg <subcommand>     SVG to PNG conversion
+  env <subcommand>     Manage persistent environment variables
   self-update          Update Hanif CLI to latest version
   help [topic]         Show help
   version              Show version
@@ -90,6 +98,7 @@ EXAMPLES
   hanif squash 5
   hanif svg convert logo.svg 64,128,256
   hanif gi .env
+  hanif env set API_KEY=sk-abc123
   hanif help git
 
 LEGACY
