@@ -23,7 +23,10 @@ setup() {
   export HOME="$TEST_HOME"
   export HANIF_SKIP_UPDATE_CHECK=1
   export HANIF_ENV_SHELL=bash
-  unset HANIF_ENV_FILE HANIF_ENV_PROFILE
+  # Pin the profile path so tests are OS-agnostic. Without this, bash on
+  # macOS resolves to ~/.bash_profile while Linux resolves to ~/.bashrc.
+  export HANIF_ENV_PROFILE="$TEST_HOME/.bashrc"
+  unset HANIF_ENV_FILE
 }
 
 teardown() {
@@ -34,7 +37,7 @@ teardown() {
      && [[ "$TEST_HOME" == /tmp/* || "$TEST_HOME" == /var/folders/* ]]; then
     rm -rf "$TEST_HOME"
   fi
-  unset HANIF_SKIP_UPDATE_CHECK HANIF_ENV_SHELL
+  unset HANIF_SKIP_UPDATE_CHECK HANIF_ENV_SHELL HANIF_ENV_PROFILE
 }
 
 # ---------------------------------------------------------------------------
