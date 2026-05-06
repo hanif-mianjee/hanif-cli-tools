@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
+#
+# Bumpversion command — semantic version bumping with RC support.
 
-# Bumpversion command handler for Hanif CLI
+register_command --name "bv" --aliases "bumpversion" --group "Other" \
+  --handler "bumpversion_command" \
+  --description "Version bumping (bump2version compatible)"
 
-# Source bumpversion functions
-# shellcheck source=../functions/bumpversion-functions.sh
-source "${FUNCTIONS_DIR}/bumpversion-functions.sh"
-
-# Bumpversion command dispatcher
 bumpversion_command() {
+  # shellcheck source=../functions/bumpversion-functions.sh
+  source "${FUNCTIONS_DIR}/bumpversion-functions.sh"
+
   local subcommand="${1:-}"
   shift 2>/dev/null || true
 
@@ -33,9 +35,8 @@ bumpversion_command() {
   esac
 }
 
-# Show bumpversion usage (short form)
 show_bumpversion_usage() {
-  cat << 'EOF'
+  cat <<'EOF'
 Bumpversion Command:
 
 Usage: hanif bumpversion <subcommand>
@@ -55,12 +56,9 @@ For detailed help: hanif bv --help
 EOF
 }
 
-# Show detailed bumpversion help
 show_bumpversion_help() {
-  cat << 'EOF'
-┌─────────────────────────────────────────────┐
-│           Version Bumping Tool              │
-└─────────────────────────────────────────────┘
+  print_banner "Version Bumping Tool"
+  cat <<'EOF'
 
 DESCRIPTION
   A bump2version-compatible version bumping tool built natively

@@ -19,11 +19,33 @@ bash tests/run-tests.sh
 
 ## Adding Commands
 
+Commands are **auto-discovered** — `bin/hanif` does not need to change.
+
 1. Create `lib/commands/yourcommand.sh`
-2. Add handler function
-3. Register in `bin/hanif`
-4. Write tests in `tests/`
-5. Submit PR
+2. At the top of the file, register the command:
+
+   ```bash
+   register_command --name "yourcommand" --aliases "yc" --group "Other" \
+     --handler "yourcommand_handler" \
+     --description "Short one-line description"
+   ```
+
+3. Define the handler function in the same file. Lazy-load any heavy logic
+   from `lib/functions/` inside the handler (so unrelated invocations stay fast):
+
+   ```bash
+   yourcommand_handler() {
+     # shellcheck source=../functions/your-functions.sh
+     source "${FUNCTIONS_DIR}/your-functions.sh"
+     run_your_thing "$@"
+   }
+   ```
+
+4. Add tests in `tests/test-yourcommand.sh` (see `tests/test-registry.sh` for the patterns).
+5. Submit a PR.
+
+See `lib/registry.sh` for the full registry API
+(`register_command`, `dispatch_command`, `registry_has`).
 
 ## Code Style
 
@@ -69,12 +91,13 @@ bash tests/run-tests.sh
 ## Project Structure
 
 ```
-bin/hanif              # Main CLI entry point
+bin/hanif              # Main CLI entry point (small dispatcher)
 lib/
-  commands/            # Command handlers
-  functions/           # Core logic
+  registry.sh          # Command registry & dispatcher
+  commands/            # Command handlers — each self-registers
+  functions/           # Core logic, lazy-loaded
   utils/common.sh      # Shared utilities
-tests/                 # Test files
+tests/                 # Test files (run via tests/run-tests.sh)
 scripts/               # Build/install scripts
 ```
 

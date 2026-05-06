@@ -24,10 +24,10 @@ find_svg_converter() {
 svg_converter_not_found() {
   error "No suitable SVG converter found!"
   echo ""
-  echo "Install one of these (recommended order):"
-  echo "  1. librsvg (best): brew install librsvg"
-  echo "  2. Inkscape:       brew install --cask inkscape"
-  echo "  3. ImageMagick:    brew install imagemagick ghostscript"
+  info "Install one of these (recommended order):"
+  hint "  1. librsvg (best): brew install librsvg"
+  hint "  2. Inkscape:       brew install --cask inkscape"
+  hint "  3. ImageMagick:    brew install imagemagick ghostscript"
 }
 
 # Convert a single SVG to PNG at a given size
@@ -96,9 +96,9 @@ svg_to_pngs() {
   done
 
   if [[ $failed -eq 0 ]]; then
-    success "Created ${#created[@]} icons:"
+    success "Created ${#created[@]} icon(s):"
     for f in "${created[@]}"; do
-      echo "  $f"
+      hint "    • $f"
     done
   else
     warning "Some conversions failed"

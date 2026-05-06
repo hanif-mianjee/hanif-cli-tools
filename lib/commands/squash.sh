@@ -1,64 +1,34 @@
 #!/usr/bin/env bash
+#
+# Squash command — interactive commit squashing.
 
-# Squash command handler for Hanif CLI
+register_command --name "squash" --group "Other" \
+  --handler "squash_command" \
+  --description "Interactive commit squashing (default: 20)"
 
-# Source squash functions
-# shellcheck source=../functions/squash-functions.sh
-source "${FUNCTIONS_DIR}/squash-functions.sh"
-
-# Squash command dispatcher
 squash_command() {
-  # Check if in git repository
   if ! git rev-parse --git-dir >/dev/null 2>&1; then
     error "Not a git repository"
-    exit 1
+    return 1
   fi
 
   local subcommand="${1:-20}"
-  
+
   case "$subcommand" in
     help|--help|-h)
       show_squash_help
       ;;
-    
     *)
-      # Treat as count for squash
+      # shellcheck source=../functions/squash-functions.sh
+      source "${FUNCTIONS_DIR}/squash-functions.sh"
       git_squash_from "$subcommand"
       ;;
   esac
 }
 
-# Show squash usage
-show_squash_usage() {
-  cat << 'EOF'
-Squash Command:
-
-Usage: hanif squash [count]
-
-Interactively squash the last N commits with smart message formatting.
-Default count: 20
-
-Examples:
-  hanif squash
-    → Shows last 20 commits (default)
-
-  hanif squash 5
-    → Shows last 5 commits, select which to squash into
-
-  hanif squash 10
-    → Shows last 10 commits
-
-For detailed help: hanif squash --help
-
-EOF
-}
-
-# Show detailed squash help
 show_squash_help() {
-  cat << 'EOF'
-┌─────────────────────────────────────────────┐
-│         Interactive Commit Squashing        │
-└─────────────────────────────────────────────┘
+  print_banner "Interactive Commit Squashing"
+  cat <<'EOF'
 
 DESCRIPTION
   Interactively squash Git commits with smart message formatting.
@@ -88,7 +58,7 @@ WORKFLOW
      💬 Enter custom message for squashed commit
         (Press Enter to use: "Third commit")
      Message: OM-1200 Major refactor
-     
+
      • Press Enter: use selected commit's message
      • Type message: use as first line of squashed commit
 
@@ -107,11 +77,11 @@ EXAMPLES
   # Clean up feature branch (8 commits)
   hanif squash 8
   # Select commit #1, add: "feat: implement user auth"
-  
+
   # Prepare for PR (squash last 5 WIP commits)
   hanif squash 5
   # Select commit #2, press Enter to keep its message
-  
+
   # Squash from root (all commits)
   hanif squash 10
   # Select option 10 to squash everything

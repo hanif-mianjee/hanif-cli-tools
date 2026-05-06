@@ -57,7 +57,11 @@ check_for_updates() {
     cache_content=$(cat "$UPDATE_CACHE_FILE" 2>/dev/null)
     if [[ "$cache_content" == "update_available" ]]; then
       echo ""
-      echo -e "\033[1;33mUpdate available!\033[0m Run '\033[1mhanif self-update\033[0m' to upgrade."
+      if [[ -t 1 && -z "${NO_COLOR:-}" && -z "${HANIF_NO_COLOR:-}" ]]; then
+        printf '\033[1;33m✨ Update available!\033[0m Run \033[1;36mhanif self-update\033[0m to upgrade.\n'
+      else
+        printf '✨ Update available! Run hanif self-update to upgrade.\n'
+      fi
     fi
   fi
 

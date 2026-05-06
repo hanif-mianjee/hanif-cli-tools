@@ -1,146 +1,77 @@
 #!/usr/bin/env bash
-
-# Hanif CLI - Personal productivity tool
+#
+# Hanif CLI - main entry point
+#
+# This file is intentionally small. It is responsible for:
+#   1. Resolving its own location (so the CLI works when symlinked).
+#   2. Loading shared utilities and the command registry.
+#   3. Sourcing every command file in ``lib/commands/`` (each file
+#      self-registers via ``register_command``).
+#   4. Dispatching the requested command.
+#
+# Adding a new command does NOT require editing this file. Drop a new
+# ``lib/commands/<name>.sh`` that calls ``register_command`` and defines the
+# handler — it will be picked up automatically. See CONTRIBUTING.md.
 
 set -euo pipefail
 
-# Resolve symlink to find the actual script location
-if [[ -L "$0" ]]; then
-  SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0")")" && pwd)"
-else
-  SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-fi
+# ---------------------------------------------------------------------------
+# Locate the script directory (handles symlink chains robustly).
+# ---------------------------------------------------------------------------
+_resolve_script_dir() {
+  local source="${BASH_SOURCE[0]}"
+  while [[ -L "$source" ]]; do
+    local dir
+    dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+    source="$(readlink "$source")"
+    [[ "$source" != /* ]] && source="$dir/$source"
+  done
+  cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd
+}
 
-# Set up library path
-LIB_DIR="${SCRIPT_DIR}/../lib"
-COMMANDS_DIR="${LIB_DIR}/commands"
-UTILS_DIR="${LIB_DIR}/utils"
-FUNCTIONS_DIR="${LIB_DIR}/functions"
+SCRIPT_DIR="$(_resolve_script_dir)"
 
-# Source common utilities
+# Library paths (exported so sourced files can locate siblings reliably).
+export LIB_DIR="${SCRIPT_DIR}/../lib"
+export COMMANDS_DIR="${LIB_DIR}/commands"
+export UTILS_DIR="${LIB_DIR}/utils"
+export FUNCTIONS_DIR="${LIB_DIR}/functions"
+
+# CLI version — single source of truth.
+VERSION="0.4.0"
+export VERSION
+
+# ---------------------------------------------------------------------------
+# Load shared utilities and the command registry.
+# ---------------------------------------------------------------------------
 # shellcheck source=../lib/utils/common.sh
 source "${UTILS_DIR}/common.sh"
-
-# Source update check
+# shellcheck source=../lib/registry.sh
+source "${LIB_DIR}/registry.sh"
 # shellcheck source=../lib/utils/update-check.sh
 source "${UTILS_DIR}/update-check.sh"
 
-# CLI Version
-VERSION="0.4.0"
-
-# Main command dispatcher
-main() {
-  # Handle no arguments
-  if [[ $# -eq 0 ]]; then
-    show_usage
-    exit 0
-  fi
-
-  local command="$1"
-  shift
-
-  case "$command" in
-    # Git shortcut commands (preferred)
-    # These are the primary way to use git commands.
-    # TODO(deprecation): Remove `hanif git <subcommand>` form in v2.0.0
-    sync)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command sync "$@"
-      ;;
-    nf|newfeature)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command nf "$@"
-      ;;
-    up|update)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command up "$@"
-      ;;
-    upall|updateall)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command upall "$@"
-      ;;
-    clean)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command clean "$@"
-      ;;
-    rb|rebase)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command rb "$@"
-      ;;
-    pull)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command pull "$@"
-      ;;
-    st|status)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command st "$@"
-      ;;
-    amend)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command amend "$@"
-      ;;
-
-    # Backward-compatible `hanif git <subcommand>` form
-    # TODO(deprecation): Remove in v2.0.0 — use `hanif <subcommand>` directly
-    git)
-      # shellcheck source=../lib/commands/git.sh
-      source "${COMMANDS_DIR}/git.sh"
-      git_command "$@"
-      ;;
-
-    squash)
-      # shellcheck source=../lib/commands/squash.sh
-      source "${COMMANDS_DIR}/squash.sh"
-      squash_command "$@"
-      ;;
-
-    gitignore|gi)
-      source "${COMMANDS_DIR}/git.sh"
-      git_command gi "$@"
-      ;;
-
-    bumpversion|bv)
-      # shellcheck source=../lib/commands/bumpversion.sh
-      source "${COMMANDS_DIR}/bumpversion.sh"
-      bumpversion_command "$@"
-      ;;
-
-    svg)
-      # shellcheck source=../lib/commands/svg.sh
-      source "${COMMANDS_DIR}/svg.sh"
-      svg_command "$@"
-      ;;
-
-    help|--help|-h)
-      # shellcheck source=../lib/commands/help.sh
-      source "${COMMANDS_DIR}/help.sh"
-      show_help "$@"
-      ;;
-
-    self-update)
-      source "${FUNCTIONS_DIR}/update-functions.sh"
-      self_update
-      ;;
-
-    version|--version|-v)
-      echo "Hanif CLI v${VERSION}"
-      ;;
-
-    *)
-      echo "❌ Unknown command: $command"
-      echo ""
-      show_usage
-      exit 1
-      ;;
-  esac
+# ---------------------------------------------------------------------------
+# Auto-discover and source every command file. Each file calls
+# ``register_command`` to make itself known to the dispatcher.
+# ---------------------------------------------------------------------------
+_load_commands() {
+  local file
+  shopt -s nullglob
+  for file in "${COMMANDS_DIR}"/*.sh; do
+    # shellcheck disable=SC1090
+    source "$file"
+  done
+  shopt -u nullglob
 }
+_load_commands
 
-# Show basic usage
+# ---------------------------------------------------------------------------
+# Top-level usage screen.
+# ---------------------------------------------------------------------------
 show_usage() {
-  cat << EOF
-┌─────────────────────────────────────────────┐
-│              Hanif CLI v${VERSION}$(printf '%*s' $((20 - ${#VERSION})) '')│
-└─────────────────────────────────────────────┘
+  print_banner "Hanif CLI v${VERSION}"
+  cat <<EOF
 
 Simple, extensible CLI for daily workflows
 
@@ -148,7 +79,7 @@ Usage: hanif <command> [options]
 
 Git Commands:
   sync                Full sync (update, rebase, clean)
-  nf "description"    Create feature branch
+  nf <description>    Create feature branch
   up                  Update main branch
   upall               Update all branches
   clean               Delete branches removed from remote
@@ -158,26 +89,71 @@ Git Commands:
   amend ["message"]   Amend last commit with current changes
   squash [count]      Interactive commit squashing (default: 20)
   gi <path>           Add to .gitignore & remove from tracking
+  gsetup [profile]    Set up a new git profile (config + SSH key)
 
 Other Commands:
   bv [subcommand]     Version bumping (bump2version compatible)
   svg <subcommand>    SVG to PNG conversion
+  env <subcommand>    Manage persistent environment variables
   self-update         Update Hanif CLI to latest version
   help [command]      Show help
   version             Show version
 
 Examples:
   hanif sync
-  hanif nf "add feature"
+  hanif nf add login form
   hanif up
   hanif squash 5
   hanif svg chrome icon.svg
+  hanif env set API_KEY=sk-abc123
+  hanif gsetup work
   hanif help git
 EOF
 }
 
-# Run main function
-main "$@"
+# ---------------------------------------------------------------------------
+# Main dispatcher.
+# ---------------------------------------------------------------------------
+main() {
+  if [[ $# -eq 0 ]]; then
+    show_usage
+    return 0
+  fi
 
-# Check for updates in background (non-blocking)
-[[ -z "${HANIF_SKIP_UPDATE_CHECK:-}" ]] && check_for_updates || true
+  local command="$1"
+  shift
+
+  # Built-in pseudo-commands (deliberately not in the registry).
+  case "$command" in
+    help|--help|-h)
+      show_help "$@"
+      return 0
+      ;;
+    version|--version|-v)
+      echo "Hanif CLI v${VERSION}"
+      return 0
+      ;;
+  esac
+
+  if registry_has "$command"; then
+    dispatch_command "$command" "$@"
+    return $?
+  fi
+
+  error "Unknown command: $command"
+  echo ""
+  show_usage
+  return 1
+}
+
+# Run the dispatcher and remember its exit code so the trailing update check
+# does not mask command failures.
+main "$@"
+_hanif_exit=$?
+
+# Background update check (best effort, never affects the run's exit code).
+if [[ -z "${HANIF_SKIP_UPDATE_CHECK:-}" ]]; then
+  check_for_updates || true
+fi
+
+exit "$_hanif_exit"

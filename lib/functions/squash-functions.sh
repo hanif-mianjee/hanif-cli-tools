@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-
-# git-squash-from
-# A CLI tool to squash Git commits interactively based on user input
+#
+# squash-functions.sh
+#
+# Interactive Git commit squashing engine. Used by ``lib/commands/squash.sh``.
 
 set -euo pipefail
 
-# Squash commits interactively
+# git_squash_from <count>
+#
+# Show the last <count> commits, ask the user which one to squash everything
+# into, ask for an optional new message, then run an interactive rebase that
+# squashes all subsequent commits into the chosen base.
 git_squash_from() {
   local count=$1
 
@@ -14,7 +19,7 @@ git_squash_from() {
     exit 1
   fi
 
-  i=0
+  local i=0
   local -a commits
   while IFS= read -r line && [ "$i" -lt "$count" ]; do
     i=$((i + 1))
@@ -28,58 +33,73 @@ EOF
     exit 1
   fi
 
-  echo "📜 Select a commit to squash everything into:"
+  echo ""
+  _hanif_render 1 "${BOLD}${MAGENTA}📜  Select a commit to squash everything into:${NC}"; printf '\n'
   for j in $(seq 1 $i); do
-    echo "$j) ${commits[j]}"
+    _hanif_render 1 "  ${CYAN}$(printf '%2d' "$j")${NC})  ${commits[j]}"; printf '\n'
   done
+  echo ""
 
   while true; do
-    printf "Enter number [1-$i]: "
-    read choice
+    local prompt_str
+    prompt_str=$(_hanif_render 1 "${YELLOW}?${NC}  Enter number ${DIM}[1-$i]${NC}: ")
+    printf '%s' "$prompt_str"
+    read -r choice
     if echo "$choice" | grep -Eq "^[0-9]+$" && [ "$choice" -ge 1 ] && [ "$choice" -le "$i" ]; then
+      local base_hash
       base_hash=$(echo "${commits[choice]}" | awk '{print substr($1, 1, 7)}')
-      
-      # Extract selected commit's message for prompt
+
+      # Validate the hash strictly — defensive against any future changes to
+      # how ``commits`` is populated. The hash MUST match a 7-hex-character
+      # pattern; reject anything else before passing it to git.
+      if ! [[ "$base_hash" =~ ^[0-9a-fA-F]{7}$ ]]; then
+        error "Invalid commit hash extracted: '$base_hash'"
+        exit 1
+      fi
+
+      local selected_commit_msg
       selected_commit_msg=$(git log -1 --format='%s' "$base_hash")
-      
-      # Prompt user for custom message
+
       echo ""
-      echo "💬 Enter custom message for squashed commit"
-      echo "   (Press Enter to use: \"$selected_commit_msg\")"
-      printf "Message: "
-      read custom_msg
-      
-      # Trim whitespace and surrounding quotes from custom message
+      _hanif_render 1 "${BOLD}${MAGENTA}💬  Enter custom message for squashed commit${NC}"; printf '\n'
+      hint "   (Press Enter to use: \"$selected_commit_msg\")"
+      local msg_prompt
+      msg_prompt=$(_hanif_render 1 "${YELLOW}?${NC}  Message: ")
+      printf '%s' "$msg_prompt"
+      read -r custom_msg
+
+      # Trim whitespace and surrounding quotes from the custom message.
       custom_msg=$(echo "$custom_msg" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^"\(.*\)"$/\1/; s/^'"'"'\(.*\)'"'"'$/\1/')
-      
-      # Check if the selected commit is the root commit (has no parent).
-      # Only use --root rebase when the commit genuinely has no parent,
-      # not just because it's the last item in the displayed list.
+
+      # Determine if the selected commit is a true root commit (no parent).
+      local is_root_commit
       is_root_commit=$(git cat-file -p "$base_hash" | grep -c '^parent ' || true)
+
+      local commit_message
+      local -a rebase_cmd
       if [ "$is_root_commit" -eq 0 ]; then
         info "Squashing all commits from the root..."
         if [ -n "$custom_msg" ]; then
-          # Custom message: all commits get * hash format
           commit_message="$custom_msg"$'\n'"$(git log --format='%h %B' --reverse --all | awk '/^[0-9a-f]+ / {sub(/^/, "* "); print; next} NF==0 {next} {print}')"
         else
-          # Default: first commit without hash, rest with * hash
           commit_message=$(git log --format='%h %B' --reverse --all | awk 'NR==1 {sub(/^[^ ]* /, ""); print; next} /^[0-9a-f]+ / {sub(/^/, "* "); print; next} NF==0 {next} {print}')
         fi
-        rebase_cmd="git rebase -i --root"
+        rebase_cmd=(git rebase -i --root)
       else
         info "Squashing commits from ${base_hash}^ to HEAD..."
         if [ -n "$custom_msg" ]; then
-          # Custom message: all commits get * hash format
           commit_message="$custom_msg"$'\n'"$(git log --format='%h %B' --reverse "$base_hash^..HEAD" | awk '/^[0-9a-f]+ / {sub(/^/, "* "); print; next} NF==0 {next} {print}')"
         else
-          # Default: first commit without hash, rest with * hash
           commit_message=$(git log --format='%h %B' --reverse "$base_hash^..HEAD" | awk 'NR==1 {sub(/^[^ ]* /, ""); print; next} /^[0-9a-f]+ / {sub(/^/, "* "); print; next} NF==0 {next} {print}')
         fi
-        rebase_cmd="git rebase -i ${base_hash}^"
+        rebase_cmd=(git rebase -i "${base_hash}^")
       fi
 
-      # Create temp script for GIT_SEQUENCE_EDITOR to squash all except the first
+      # Build a temp script for GIT_SEQUENCE_EDITOR that turns every "pick"
+      # line after the first into "squash". Use mktemp securely.
+      local seq_script
       seq_script=$(mktemp)
+      chmod 700 "$seq_script"
       if [[ "$(uname -s)" == "Darwin" ]]; then
         cat > "$seq_script" <<'EOSCRIPT'
 #!/bin/bash
@@ -93,19 +113,20 @@ EOSCRIPT
       fi
       chmod +x "$seq_script"
 
-      # Start rebase with interactive squashing
+      # Invoke the rebase as an array (no shell-string eval). Capture
+      # rebase status without tripping ``set -e``.
       local rebase_ok=true
-      GIT_SEQUENCE_EDITOR="$seq_script" $rebase_cmd || rebase_ok=false
+      GIT_SEQUENCE_EDITOR="$seq_script" "${rebase_cmd[@]}" || rebase_ok=false
 
       rm -f "$seq_script"
 
-      # Apply commit message if rebase succeeded
       if [ "$rebase_ok" = true ]; then
-        # Write commit message to temp file to preserve formatting
+        # Write the final commit message via -F to preserve all formatting,
+        # using a securely-created temp file.
+        local msg_file
         msg_file=$(mktemp)
-        cat > "$msg_file" <<EOF
-$commit_message
-EOF
+        chmod 600 "$msg_file"
+        printf '%s\n' "$commit_message" > "$msg_file"
 
         git commit --amend -F "$msg_file" >/dev/null 2>&1
         rm -f "$msg_file"

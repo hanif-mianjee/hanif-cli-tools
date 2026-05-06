@@ -1,179 +1,287 @@
 #!/usr/bin/env bash
+#
+# Common utility functions for Hanif CLI.
+#
+# Sourced by ``bin/hanif`` at startup. Keep this file lean — only utilities
+# that are used in two or more places belong here.
 
-# Common utility functions for Hanif CLI
-
-# Color codes (only set if not already defined)
+# Color codes (only set if not already defined to allow re-sourcing).
+#
+# Colors are disabled automatically when:
+#   - The relevant stream (stdout for most helpers, stderr for ``error``) is
+#     not a TTY (so piped/captured output stays clean for tests and scripts).
+#   - The ``NO_COLOR`` environment variable is set (https://no-color.org/).
+#   - ``HANIF_NO_COLOR`` is set (escape hatch for our own callers).
 if [[ -z "${HANIF_COLORS_DEFINED:-}" ]]; then
-  readonly RED='\033[0;31m'
-  readonly GREEN='\033[0;32m'
-  readonly YELLOW='\033[1;33m'
-  readonly BLUE='\033[0;34m'
-  readonly NC='\033[0m' # No Color
+  if [[ -z "${NO_COLOR:-}" && -z "${HANIF_NO_COLOR:-}" ]]; then
+    readonly RED='\033[0;31m'
+    readonly GREEN='\033[0;32m'
+    readonly YELLOW='\033[1;33m'
+    readonly BLUE='\033[0;34m'
+    readonly CYAN='\033[0;36m'
+    readonly MAGENTA='\033[0;35m'
+    readonly GRAY='\033[0;90m'
+    readonly BOLD='\033[1m'
+    readonly DIM='\033[2m'
+    readonly NC='\033[0m' # Reset
+  else
+    readonly RED='' GREEN='' YELLOW='' BLUE='' CYAN='' MAGENTA=''
+    readonly GRAY='' BOLD='' DIM='' NC=''
+  fi
   readonly HANIF_COLORS_DEFINED=1
 fi
 
-# Logging functions
-info() {
-  echo -e "${BLUE}ℹ${NC} $*"
+# Strip color codes when the target stream is not a TTY. Returns the original
+# string when colors should be shown, or a stripped copy when they shouldn't.
+#   $1 = fd (1 for stdout, 2 for stderr)
+#   $2 = string to render
+_hanif_render() {
+  local fd="$1"
+  local s="$2"
+  if [[ -n "${NO_COLOR:-}" || -n "${HANIF_NO_COLOR:-}" ]] || [[ ! -t "$fd" ]]; then
+    # Use sed to strip ANSI CSI sequences. Bash parameter expansion can't
+    # easily match this multi-character escape pattern (\033[...m), so sed
+    # is the clearest tool here.
+    # shellcheck disable=SC2001
+    printf '%b' "$s" | sed $'s/\033\\[[0-9;]*m//g'
+  else
+    printf '%b' "$s"
+  fi
 }
 
-success() {
-  echo -e "${GREEN}✓${NC} $*"
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+info()    { _hanif_render 1 "${BLUE}ℹ${NC}  $*"; printf '\n'; }
+success() { _hanif_render 1 "${GREEN}✓${NC}  $*"; printf '\n'; }
+warning() { _hanif_render 1 "${YELLOW}⚠${NC}  $*"; printf '\n'; }
+error()   { _hanif_render 2 "${RED}✗${NC}  $*" >&2; printf '\n' >&2; }
+
+# Print a numbered/labelled step. Useful inside multi-stage commands.
+#   step "Fetching" "from origin"
+step()    { _hanif_render 1 "${CYAN}→${NC}  ${BOLD}$1${NC}${2:+ $2}"; printf '\n'; }
+
+# Print a faint hint line (e.g. "Tip: …" or contextual guidance).
+hint()    { _hanif_render 1 "${DIM}$*${NC}"; printf '\n'; }
+
+# Print a colored boxed banner. Width is fixed at 47 chars to match the
+# existing aesthetic of the help screens.
+#   print_banner "Hanif CLI v${VERSION}"
+print_banner() {
+  local title="$1"
+  local width=47
+  local pad=$(( width - ${#title} ))
+  (( pad < 0 )) && pad=0
+  local left=$(( pad / 2 ))
+  local right=$(( pad - left ))
+  local lpad rpad
+  lpad=$(printf '%*s' "$left" '')
+  rpad=$(printf '%*s' "$right" '')
+  local bar
+  bar=$(printf '─%.0s' $(seq 1 $width))
+  _hanif_render 1 "${CYAN}┌${bar}┐${NC}"; printf '\n'
+  _hanif_render 1 "${CYAN}│${NC}${lpad}${BOLD}${title}${NC}${rpad}${CYAN}│${NC}"; printf '\n'
+  _hanif_render 1 "${CYAN}└${bar}┘${NC}"; printf '\n'
 }
 
-warning() {
-  echo -e "${YELLOW}⚠${NC} $*"
+# Aligned key/value printer.
+#   kv "Profile" "~/.zshrc"   →  Profile  ~/.zshrc
+# The key is dim+bold so the value is what your eye lands on.
+#   $1 = key (label)
+#   $2 = value
+#   $3 = optional padding width for the key column (default 14)
+kv() {
+  local key="$1" value="$2" pad="${3:-14}"
+  _hanif_render 1 "  ${BOLD}${CYAN}$(printf '%-*s' "$pad" "$key")${NC}  ${value}"
+  printf '\n'
 }
 
-error() {
-  echo -e "${RED}✗${NC} $*" >&2
+# Render a tabular view from tab-separated rows on stdin.
+#
+# The first argument is a pipe-separated list of header labels; subsequent
+# rows are read from stdin as TAB-separated values. Column widths are
+# auto-sized to the widest cell. Output uses light box-drawing characters
+# and is colorized (cyan borders, bold headers) when stdout is a TTY.
+#
+# Usage:
+#   {
+#     printf '%s\t%s\n' FOO "bar"
+#     printf '%s\t%s\n' BAZ "qux"
+#   } | render_table "KEY|VALUE"
+#
+# Notes:
+#   - Cells must not contain raw TAB or newline characters.
+#   - ANSI escape sequences in cell values are NOT supported (they would
+#     throw off the width calculation). Pass plain strings only.
+render_table() {
+  local header_spec="${1:-}"
+  if [[ -z "$header_spec" ]]; then
+    error "render_table: header spec is required"
+    return 1
+  fi
+
+  # Parse headers (pipe-separated).
+  local -a headers=()
+  local IFS='|'
+  read -r -a headers <<< "$header_spec"
+  IFS=$' \t\n'
+  local ncols=${#headers[@]}
+
+  # Read all rows into memory so we can size columns.
+  local -a rows=()
+  local line
+  while IFS= read -r line; do
+    rows+=("$line")
+  done
+
+  # Initialize widths from header lengths.
+  local -a widths=()
+  local i
+  for ((i = 0; i < ncols; i++)); do
+    widths[i]=${#headers[i]}
+  done
+
+  # Expand widths to fit data.
+  local row col_idx
+  local -a cells
+  for row in "${rows[@]}"; do
+    IFS=$'\t' read -r -a cells <<< "$row"
+    for ((i = 0; i < ncols; i++)); do
+      local cell="${cells[i]:-}"
+      (( ${#cell} > widths[i] )) && widths[i]=${#cell}
+    done
+  done
+
+  # Build separator: ┌──┬──┐, ├──┼──┤, └──┴──┘
+  local sep_top sep_mid sep_bot
+  sep_top="${CYAN}┌"; sep_mid="${CYAN}├"; sep_bot="${CYAN}└"
+  for ((i = 0; i < ncols; i++)); do
+    local bar
+    bar=$(printf '─%.0s' $(seq 1 $((widths[i] + 2))))
+    sep_top+="${bar}"
+    sep_mid+="${bar}"
+    sep_bot+="${bar}"
+    if (( i < ncols - 1 )); then
+      sep_top+="┬"; sep_mid+="┼"; sep_bot+="┴"
+    else
+      sep_top+="┐${NC}"; sep_mid+="┤${NC}"; sep_bot+="┘${NC}"
+    fi
+  done
+
+  # Header row.
+  _hanif_render 1 "$sep_top"; printf '\n'
+  local line_str="${CYAN}│${NC}"
+  for ((i = 0; i < ncols; i++)); do
+    line_str+=" ${BOLD}$(printf '%-*s' "${widths[i]}" "${headers[i]}")${NC} ${CYAN}│${NC}"
+  done
+  _hanif_render 1 "$line_str"; printf '\n'
+  _hanif_render 1 "$sep_mid"; printf '\n'
+
+  # Data rows.
+  for row in "${rows[@]}"; do
+    IFS=$'\t' read -r -a cells <<< "$row"
+    line_str="${CYAN}│${NC}"
+    for ((i = 0; i < ncols; i++)); do
+      local cell="${cells[i]:-}"
+      line_str+=" $(printf '%-*s' "${widths[i]}" "$cell") ${CYAN}│${NC}"
+    done
+    _hanif_render 1 "$line_str"; printf '\n'
+  done
+
+  _hanif_render 1 "$sep_bot"; printf '\n'
 }
 
-# Check if command exists
+# ---------------------------------------------------------------------------
+# Environment helpers
+# ---------------------------------------------------------------------------
+
+# Check if a command exists on PATH.
 command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-# Check if in git repository
+# Check whether the current directory is inside a git repository.
 is_git_repo() {
   git rev-parse --git-dir >/dev/null 2>&1
 }
 
-# Get current git branch
+# Print the current git branch name (or empty string).
 get_current_branch() {
   git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
-# Check if branch exists
+# Check whether a local branch exists.
 branch_exists() {
   local branch="$1"
   git show-ref --verify --quiet "refs/heads/$branch"
 }
 
-# Confirm action (returns 0 for yes, 1 for no)
+# Confirm an action interactively. Returns 0 for yes, 1 for no.
 confirm() {
   local prompt="${1:-Are you sure?}"
   local response
-  
-  read -r -p "$(echo -e "${YELLOW}?${NC} ${prompt} [y/N]: ")" response
+  local prompt_str
+  prompt_str=$(_hanif_render 1 "${YELLOW}?${NC}  ${prompt} ${DIM}[y/N]${NC}: ")
+  read -r -p "$prompt_str" response
   case "$response" in
-    [yY][eE][sS]|[yY]) 
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
+    [yY][eE][sS]|[yY]) return 0 ;;
+    *) return 1 ;;
   esac
 }
 
-# Print separator
-separator() {
-  echo "────────────────────────────────────────"
-}
+# ---------------------------------------------------------------------------
+# Sanity checks
+# ---------------------------------------------------------------------------
 
-# Print header
-header() {
-  echo ""
-  separator
-  echo "$*"
-  separator
-}
-
-# Validate command arguments
-require_args() {
-  local count=$1
-  shift
-  local actual=$#
-  
-  if [[ $actual -lt $count ]]; then
-    error "Insufficient arguments: expected at least $count, got $actual"
-    return 1
-  fi
-  return 0
-}
-
-# Get script version
-get_version() {
-  echo "${VERSION:-0.0.0}"
-}
-
-# Check minimum git version
+# Warn if git is missing or older than the recommended minimum.
 check_git_version() {
   if ! command_exists git; then
     error "Git is not installed"
     return 1
   fi
-  
+
   local min_version="2.0.0"
   local git_version
   git_version=$(git --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
-  
-  # Simple version comparison (good enough for major.minor.patch)
+
+  # Simple version comparison (good enough for major.minor.patch).
   if [[ "$(printf '%s\n' "$min_version" "$git_version" | sort -V | head -n1)" != "$min_version" ]]; then
     warning "Git version $git_version detected. Recommended: $min_version or higher"
   fi
 }
 
-# Safe stash (returns 1 if stash was created, 0 otherwise)
-safe_stash() {
-  local message="${1:-Auto stash by Hanif CLI}"
-  
-  if [[ -n "$(git status --porcelain)" ]]; then
-    info "Stashing local changes..."
-    git stash push -m "$message"
-    return 1  # Stash was created
-  fi
-  return 0  # No stash needed
-}
+# ---------------------------------------------------------------------------
+# Git/branch name sanitization
+# ---------------------------------------------------------------------------
 
-# Safe stash pop
-safe_stash_pop() {
-  info "Restoring stashed changes..."
-  if ! git stash pop; then
-    warning "Stash pop failed - you may need to resolve conflicts"
-    echo "Run 'git stash list' to see your stashes"
-    return 1
-  fi
-  return 0
-}
-
-# Truncate string to max length
-truncate_string() {
-  local string="$1"
-  local max_length="${2:-60}"
-  
-  if [[ ${#string} -gt $max_length ]]; then
-    echo "${string:0:$max_length}"
-  else
-    echo "$string"
-  fi
-}
-
-# Sanitize string for branch names
+# Sanitize an arbitrary string into a git-branch-safe slug:
+#   "Fix - Bug!" -> "fix_bug"
 sanitize_branch_name() {
   local input="$1"
-  
-  # Keep only alphanumeric, spaces, underscores, hyphens
-  # Then collapse runs of spaces/underscores/hyphens into a single space
+
+  # Keep only alphanumeric, spaces, underscores, hyphens; collapse runs of
+  # spaces/underscores/hyphens into a single space.
   local clean
   clean=$(echo "$input" | tr -cd '[:alnum:] _-' | sed -E 's/[[:space:]_-]+/ /g')
 
-  # Convert spaces to underscores
+  # Spaces -> underscores.
   clean=$(echo "$clean" | tr ' ' '_')
 
-  # Normalize multiple underscores to single
+  # Collapse multiple underscores.
   clean=$(echo "$clean" | sed -E 's/_+/_/g')
-  
-  # Trim leading/trailing underscores
+
+  # Trim leading/trailing underscores.
   clean=$(echo "$clean" | sed -E 's/^_+|_+$//g')
-  
-  # Convert to lowercase
-  clean=$(echo "$clean" | tr '[:upper:]' '[:lower:]')
-  
-  echo "$clean"
+
+  # Lowercase for consistency.
+  echo "$clean" | tr '[:upper:]' '[:lower:]'
 }
 
-# Portable in-place sed (macOS requires -i '', Linux requires -i)
+# ---------------------------------------------------------------------------
+# Portability shims
+# ---------------------------------------------------------------------------
+
+# Portable in-place sed (macOS requires -i '', Linux requires -i).
 sed_inplace() {
   if [[ "$(uname -s)" == "Darwin" ]]; then
     sed -i '' "$@"
@@ -182,48 +290,10 @@ sed_inplace() {
   fi
 }
 
-# Check if running in CI environment
-is_ci() {
-  [[ -n "${CI:-}" ]] || [[ -n "${GITHUB_ACTIONS:-}" ]] || [[ -n "${GITLAB_CI:-}" ]]
-}
-
-# Print debug info (only if DEBUG=1)
-debug() {
-  if [[ "${DEBUG:-0}" == "1" ]]; then
-    echo -e "${BLUE}[DEBUG]${NC} $*" >&2
-  fi
-}
-
-# Execute command with retry
-retry() {
-  local max_attempts="${1:-3}"
-  local delay="${2:-2}"
-  shift 2
-  local command=("$@")
-  local attempt=1
-  
-  while [[ $attempt -le $max_attempts ]]; do
-    if "${command[@]}"; then
-      return 0
-    fi
-    
-    if [[ $attempt -lt $max_attempts ]]; then
-      warning "Command failed (attempt $attempt/$max_attempts). Retrying in ${delay}s..."
-      sleep "$delay"
-    fi
-    
-    ((attempt++))
-  done
-  
-  error "Command failed after $max_attempts attempts"
-  return 1
-}
-
-# Export functions for use in sourced scripts
-export -f info success warning error
+# ---------------------------------------------------------------------------
+# Exports — sourced files (and subshells) need access to these.
+# ---------------------------------------------------------------------------
+export -f info success warning error step hint print_banner kv render_table _hanif_render
 export -f command_exists is_git_repo get_current_branch branch_exists
-export -f confirm separator header require_args
-export -f get_version check_git_version
-export -f safe_stash safe_stash_pop
-export -f truncate_string sanitize_branch_name
-export -f sed_inplace is_ci debug retry
+export -f confirm check_git_version
+export -f sanitize_branch_name sed_inplace

@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### Added
+- **New command: `hanif gsetup`** (alias `hanif git-setup`) — one-shot setup for a new git profile (work, personal, freelance, experiments, …).
+  - Asks for a profile name (or accepts it as an argument), suggests a default repos directory (`~/code/<profile>`), and prompts for `user.name` / `user.email`.
+  - Generates a dedicated `ed25519` SSH key at `~/.ssh/id_ed25519_<profile>` (no passphrase by default — the summary tells you how to add one with `ssh-keygen -p` later).
+  - Writes a per-profile gitconfig at `~/.gitconfig-<profile>` containing the right `user.name`/`user.email` and a `core.sshCommand` pinned to the new key.
+  - Appends an idempotent `includeIf "gitdir:<repos-dir>/"` block to `~/.gitconfig` (delimited by `# >>> hanif gsetup: <profile> >>>` markers) so git auto-loads the right identity AND ssh key whenever you're working inside that directory — no per-repo configuration.
+  - Detects existing keys / per-profile configs and asks before reusing or overwriting; backs up `~/.gitconfig` and the per-profile config as `<file>.bak` before any change.
+  - Prints the public key plus copy-pasteable instructions for adding it to GitHub and Azure DevOps.
+  - Re-running for the same profile updates the `includeIf` block in place instead of duplicating it.
+- **New command: `hanif env`** (alias `hanif e`) — manage persistent environment variables.
+  - Subcommands: `set KEY=VALUE` / `set KEY VALUE` (with overwrite detection), `unset KEY`, `list` (tabular view), `get KEY`, `source` (prints the load command for the current shell), `edit`, `path`.
+  - Persists to a Hanif-managed file (`~/.hanif/env.sh`, or `~/.hanif/env.fish` for fish) and wires the user's shell profile (`~/.zshrc`, `~/.bashrc`/`~/.bash_profile`, or `~/.config/fish/conf.d/hanif.fish`) to source it once on shell start. The profile is touched at most once and only after explicit confirmation.
+  - Strict safety: `KEY` validated against `^[A-Za-z_][A-Za-z0-9_]*$`, `VALUE` shell-quoted with `printf '%q'` before being written, no `eval` on user input, automatic `.bak` side-file before each write, secrets-looking keys (`*TOKEN*`/`*SECRET*`/`*PASSWORD*`/`*KEY*`/`*API*`) masked in `list`.
+  - Override with `HANIF_ENV_PROFILE` / `HANIF_ENV_FILE` / `HANIF_ENV_SHELL`.
+- `render_table` and `kv` helpers in `lib/utils/common.sh` for tabular and aligned key/value output (TTY/`NO_COLOR` aware, cyan box-drawing borders).
+- `gitclean` now ends with a polished tabular summary (kept / deleted / protected branches) and a one-line totals line.
+- `step`, `hint`, and `print_banner` helpers in `lib/utils/common.sh` for consistent UI across commands.
+- TTY / `NO_COLOR` / `HANIF_NO_COLOR` aware color rendering — colors are automatically stripped when output is piped or captured (keeps scripts and tests clean).
+
+### Changed
+- `hanif nf` (newfeature) now accepts multi-word descriptions without quotes — `hanif nf add login form` works the same as `hanif nf "add login form"`. Quoted form remains fully supported.
+- Refreshed CLI output across the board for a more polished, professional feel:
+  - Consistent colored, iconified status lines (`ℹ`, `✓`, `⚠`, `✗`, `→`) via shared logging helpers.
+  - Boxed banners on every help screen render in cyan/bold when the terminal supports it.
+  - Squash interactive prompts and commit-selection list use color and consistent spacing.
+  - Update-available notice uses bold/colored highlights.
+
 ## [0.4.0] - 2026-02-14
 
 ### Added

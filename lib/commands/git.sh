@@ -1,137 +1,198 @@
 #!/usr/bin/env bash
+#
+# Git command handlers for Hanif CLI.
+#
+# This file registers all git-related top-level commands AND a legacy
+# ``hanif git <subcommand>`` passthrough for backwards compatibility.
+# Adding a new git command is a one-liner: add a register_command call and a
+# matching handler at the bottom.
 
-# Git command handler for Hanif CLI
+# ---------------------------------------------------------------------------
+# Registration
+# ---------------------------------------------------------------------------
+register_command --name "sync"   --group "Git" \
+  --handler "git_sync_handler" \
+  --description "Full sync (update, rebase, clean)"
 
-# Source git functions
-# shellcheck source=../functions/git-functions.sh
-source "${FUNCTIONS_DIR}/git-functions.sh"
+register_command --name "nf"     --aliases "newfeature" --group "Git" \
+  --handler "git_nf_handler" \
+  --description "Create feature branch"
 
-# Git subcommand dispatcher
-git_command() {
+register_command --name "up"     --aliases "update"     --group "Git" \
+  --handler "git_up_handler" \
+  --description "Update main branch"
+
+register_command --name "upall"  --aliases "updateall"  --group "Git" \
+  --handler "git_upall_handler" \
+  --description "Update all branches"
+
+register_command --name "clean"  --group "Git" \
+  --handler "git_clean_handler" \
+  --description "Delete branches removed from remote"
+
+register_command --name "rb"     --aliases "rebase"     --group "Git" \
+  --handler "git_rebase_handler" \
+  --description "Rebase onto branch"
+
+register_command --name "pull"   --group "Git" \
+  --handler "git_pull_handler" \
+  --description "Fetch all + pull"
+
+register_command --name "st"     --aliases "status"     --group "Git" \
+  --handler "git_status_handler" \
+  --description "Git status"
+
+register_command --name "amend"  --group "Git" \
+  --handler "git_amend_handler" \
+  --description "Amend last commit with current changes"
+
+register_command --name "gi"     --aliases "gitignore"  --group "Git" \
+  --handler "git_gitignore_handler" \
+  --description "Add to .gitignore & remove from tracking"
+
+# Legacy ``hanif git <subcommand>`` form. Scheduled for removal in v2.0.0;
+# kept until then for backwards compatibility.
+register_command --name "git" --group "Git" \
+  --handler "git_legacy_handler" \
+  --description "Legacy: hanif git <subcommand> (deprecated)"
+
+# ---------------------------------------------------------------------------
+# Lazy loader for the heavy git function library.
+# ---------------------------------------------------------------------------
+_git_load_funcs() {
+  if [[ -z "${HANIF_GIT_FUNCS_LOADED:-}" ]]; then
+    # shellcheck source=../functions/git-functions.sh
+    source "${FUNCTIONS_DIR}/git-functions.sh"
+    HANIF_GIT_FUNCS_LOADED=1
+  fi
   check_git_version
+}
+
+# Helper used by handlers that take an optional ``help`` first argument.
+_git_help_or_run() {
+  local fn="$1"
+  shift
+  case "${1:-}" in
+    help|--help|-h) show_git_help; return 0 ;;
+  esac
+  "$fn" "$@"
+}
+
+# ---------------------------------------------------------------------------
+# Top-level handlers
+# ---------------------------------------------------------------------------
+git_sync_handler() {
+  _git_load_funcs
+  info "Starting full sync..."
+
+  local base_branch="main"
+  if git show-ref --verify --quiet refs/heads/main; then
+    base_branch="main"
+  elif git show-ref --verify --quiet refs/heads/master; then
+    base_branch="master"
+  fi
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+
+  gitup
+
+  if [[ -n "$current_branch" ]] && \
+     [[ "$current_branch" != "$base_branch" ]] && \
+     [[ "$current_branch" != "HEAD" ]]; then
+    gitrebase "$base_branch"
+  fi
+
+  gitclean
+  success "Full sync complete!"
+}
+
+git_nf_handler() {
+  _git_load_funcs
+  if [[ $# -eq 0 ]]; then
+    error "Usage: hanif nf <description>"
+    hint "  hanif nf add login form"
+    hint "  hanif nf \"JIRA-123: add login form\""
+    return 1
+  fi
+  case "${1:-}" in
+    help|--help|-h) show_git_help; return 0 ;;
+  esac
+  # Accept multi-word descriptions without requiring quotes — mirrors how
+  # ``hanif squash`` reads multi-word commit messages. ``"$*"`` joins all
+  # arguments with a single space so:
+  #   hanif nf add login form          → "add login form"
+  #   hanif nf "JIRA-123: add login"   → "JIRA-123: add login"
+  # both produce the same result.
+  newfeature "$*"
+}
+
+git_up_handler()    { _git_load_funcs; _git_help_or_run gitup    "$@"; }
+git_upall_handler() { _git_load_funcs; _git_help_or_run gitupall "$@"; }
+git_clean_handler() { _git_load_funcs; _git_help_or_run gitclean "$@"; }
+git_rebase_handler(){ _git_load_funcs; _git_help_or_run gitrebase "$@"; }
+git_amend_handler() { _git_load_funcs; _git_help_or_run gitamend "$@"; }
+
+git_pull_handler() {
+  _git_load_funcs
+  is_git_repo || { error "Not a git repository"; return 1; }
+  info "Fetching from all remotes and pulling..."
+  git fetch --all && git pull
+}
+
+git_status_handler() {
+  _git_load_funcs
+  git status "$@"
+}
+
+git_gitignore_handler() {
+  _git_load_funcs
+  case "${1:-}" in
+    help|--help|-h) show_git_help; return 0 ;;
+  esac
+  gitignore_add "$@"
+}
+
+# Legacy ``hanif git <subcommand>`` dispatcher. Routes the subcommand back
+# through the registry so behavior stays identical to the new top-level form.
+git_legacy_handler() {
+  _git_load_funcs
 
   if [[ $# -eq 0 ]]; then
     show_git_usage
-    exit 1
+    return 1
   fi
 
   local subcommand="$1"
   shift
 
   case "$subcommand" in
-    newfeature|nf)
-      if [[ $# -eq 0 ]]; then
-        error "Usage: hanif nf \"description\""
-        exit 1
-      fi
-      case "$1" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      newfeature "$@"
-      ;;
-    
-    up|update)
-      case "${1:-}" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      gitup "$@"
-      ;;
-
-    upall|updateall)
-      case "${1:-}" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      gitupall "$@"
-      ;;
-
-    clean)
-      case "${1:-}" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      gitclean "$@"
-      ;;
-    
-    rebase|rb)
-      case "${1:-}" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      gitrebase "$@"
-      ;;
-    
-    pull)
-      # Custom pull command: fetch all and pull
-      git rev-parse --git-dir >/dev/null 2>&1 || { error "Not a git repository"; exit 1; }
-      info "Fetching from all remotes and pulling..."
-      git fetch --all && git pull
-      ;;
-    
-    status|st)
-      git status "$@"
-      ;;
-
-    amend)
-      case "${1:-}" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      gitamend "$@"
-      ;;
-    
-    gitignore|gi)
-      case "${1:-}" in
-        help|--help|-h) show_git_help; return ;;
-      esac
-      gitignore_add "$@"
-      ;;
-    
-    sync)
-      # Full sync: update base branch, rebase current branch, clean old branches
-      info "Starting full sync..."
-      
-      local base_branch="main"
-      if git show-ref --verify --quiet refs/heads/main; then
-        base_branch="main"
-      elif git show-ref --verify --quiet refs/heads/master; then
-        base_branch="master"
-      fi
-      
-      local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-      
-      # Update base branch
-      gitup
-      
-      # If not on base branch, rebase
-      if [[ "$current_branch" != "$base_branch" ]] && [[ "$current_branch" != "HEAD" ]]; then
-        gitrebase "$base_branch"
-      fi
-      
-      # Clean old branches
-      gitclean
-      
-      success "Full sync complete!"
-      ;;
-    
-    help|--help|-h)
-      show_git_help
-      ;;
-    
-    *)
-      # Pass through to git for unknown commands
-      info "Passing through to git: git $subcommand $*"
-      git "$subcommand" "$@"
-      ;;
+    help|--help|-h) show_git_help; return 0 ;;
   esac
+
+  if registry_has "$subcommand"; then
+    dispatch_command "$subcommand" "$@"
+    return $?
+  fi
+
+  # Pass-through to git for unknown subcommands (e.g. `hanif git commit -m`).
+  info "Passing through to git: git $subcommand $*"
+  git "$subcommand" "$@"
 }
 
-# Show git subcommand usage
+# ---------------------------------------------------------------------------
+# Help / usage screens (kept here so they live next to the commands they
+# describe).
+# ---------------------------------------------------------------------------
 show_git_usage() {
-  cat << 'EOF'
+  cat <<'EOF'
 Git Commands:
 
 Usage: hanif <command> [options]
 
 Commands:
   sync                     Full sync (update, rebase, clean)
-  nf, newfeature <desc>    Create feature branch
+  nf, newfeature <desc>    Create feature branch (multi-word, no quotes needed)
   up, update               Update main branch
   upall, updateall         Update all branches
   clean                    Delete branches removed from remote
@@ -140,10 +201,11 @@ Commands:
   pull                     Fetch all + pull
   st, status               Git status
   gi, gitignore <path>     Add to .gitignore & untrack
+  gsetup, git-setup [name] Set up a new git profile (config + SSH key)
 
 Examples:
   hanif sync
-  hanif nf "add feature"
+  hanif nf add login form
   hanif nf "JIRA-123: add feature"
     → Creates: feature/jira-123_add_feature
   hanif rb main
@@ -154,12 +216,9 @@ Tip: `hanif git <command>` also works (legacy syntax)
 EOF
 }
 
-# Show detailed git help
 show_git_help() {
-  cat << 'EOF'
-┌─────────────────────────────────────────────┐
-│           Git Helper Commands               │
-└─────────────────────────────────────────────┘
+  print_banner "Git Helper Commands"
+  cat <<'EOF'
 
 SYNC
   Full repository sync - perfect for starting work
@@ -171,11 +230,12 @@ SYNC
 NEWFEATURE (nf)
   Create feature branch with smart naming
   Automatically extracts JIRA/ticket numbers
+  Multi-word descriptions work without quotes
 
-  hanif nf "add login"
+  hanif nf add login
     → feature/add_login
 
-  hanif nf "JIRA-123: fix bug"
+  hanif nf JIRA-123 fix bug
     → feature/jira-123_fix_bug
 
   hanif nf "OM-456 implement feature"
@@ -237,6 +297,22 @@ PULL
   Fetch all remotes and pull
 
   hanif pull
+
+GSETUP (git-setup)
+  One-shot setup for a new git identity (work, personal, freelance, …).
+  Generates an ed25519 SSH key, writes a per-profile gitconfig, and
+  appends an idempotent `includeIf` block to ~/.gitconfig so git
+  picks the right name/email AND ssh key automatically based on
+  which directory the repo lives in.
+
+  hanif gsetup work
+    → asks for repos dir (default ~/code/work), user.name, user.email
+    → creates ~/.ssh/id_ed25519_work
+    → writes ~/.gitconfig-work
+    → appends includeIf block to ~/.gitconfig
+    → prints public key + GitHub / Azure DevOps instructions
+
+  Run `hanif gsetup --help` for full details.
 
 LEGACY SYNTAX
   `hanif git <command>` still works for backward compatibility.
