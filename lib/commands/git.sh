@@ -201,6 +201,7 @@ Commands:
   pull                     Fetch all + pull
   st, status               Git status
   gi, gitignore <path>     Add to .gitignore & untrack
+  gsetup, git-setup [name] Set up a new git profile (config + SSH key)
 
 Examples:
   hanif sync
@@ -296,6 +297,22 @@ PULL
   Fetch all remotes and pull
 
   hanif pull
+
+GSETUP (git-setup)
+  One-shot setup for a new git identity (work, personal, freelance, …).
+  Generates an ed25519 SSH key, writes a per-profile gitconfig, and
+  appends an idempotent `includeIf` block to ~/.gitconfig so git
+  picks the right name/email AND ssh key automatically based on
+  which directory the repo lives in.
+
+  hanif gsetup work
+    → asks for repos dir (default ~/code/work), user.name, user.email
+    → creates ~/.ssh/id_ed25519_work
+    → writes ~/.gitconfig-work
+    → appends includeIf block to ~/.gitconfig
+    → prints public key + GitHub / Azure DevOps instructions
+
+  Run `hanif gsetup --help` for full details.
 
 LEGACY SYNTAX
   `hanif git <command>` still works for backward compatibility.
