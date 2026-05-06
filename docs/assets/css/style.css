@@ -231,7 +231,8 @@ kbd {
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  padding: var(--space-3) 0;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
 }
 
 .nav-brand {
