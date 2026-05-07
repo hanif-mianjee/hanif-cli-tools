@@ -11,7 +11,11 @@
 ## Installation
 
 ```bash
+# Latest
 curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh | bash
+
+# Specific version (tag, branch, or commit SHA)
+HANIF_VERSION=v1.0.0 bash <(curl -fsSL https://raw.githubusercontent.com/hanif-mianjee/hanif-cli-tools/main/install.sh)
 ```
 
 ## Git Commands
