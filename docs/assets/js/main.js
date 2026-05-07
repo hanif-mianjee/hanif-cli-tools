@@ -207,4 +207,36 @@
     }
     renderStep(0, false);
   }
+
+  // ---------- Version injection ----------
+  // Reads window.HANIF_VERSION (set inline in <head>) and stamps every
+  // version-bearing element on the page. Safe to call on any page that
+  // may not have these elements.
+  function injectVersion() {
+    var v = window.HANIF_VERSION;
+    if (!v) return;
+
+    // Hero eyebrow badge
+    var badge = document.getElementById('js-version-badge');
+    if (badge) badge.textContent = 'v' + v;
+
+    // self-update demo "Latest: x.x.x"
+    var latest = document.getElementById('js-version-latest');
+    if (latest) latest.textContent = v;
+
+    // install verify "hanif x.x.x"
+    var verify = document.getElementById('js-version-verify');
+    if (verify) verify.textContent = v;
+
+    // JSON-LD structured data
+    var ldScript = document.querySelector('script[type="application/ld+json"]');
+    if (ldScript) {
+      try {
+        var data = JSON.parse(ldScript.textContent);
+        data.softwareVersion = v;
+        ldScript.textContent = JSON.stringify(data, null, 4);
+      } catch (e) { /* leave as-is if JSON parse fails */ }
+    }
+  }
+  injectVersion();
 })();

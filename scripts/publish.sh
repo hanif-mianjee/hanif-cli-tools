@@ -140,6 +140,10 @@ main() {
     sed_inplace "s/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-${new_version}-blue/" README.md
     success "Updated README.md badge"
 
+    # docs/index.html - single HANIF_VERSION JS variable (page renders all version spots from it)
+    sed_inplace "s/var HANIF_VERSION = \"[^\"]*\"/var HANIF_VERSION = \"${new_version}\"/" docs/index.html
+    success "Updated docs/index.html"
+
     # CHANGELOG.md - stamp [Unreleased] with version and date, add new empty Unreleased section
     local today
     today=$(date +%Y-%m-%d)
@@ -169,7 +173,7 @@ main() {
 
   # 11. Commit version bump
   if [[ "$new_version" != "$current_version" ]]; then
-    git add bin/hanif CHANGELOG.md README.md lib/commands/*.sh lib/functions/*.sh lib/utils/*.sh
+    git add bin/hanif CHANGELOG.md README.md docs/index.html lib/commands/*.sh lib/functions/*.sh lib/utils/*.sh
     git commit -m "chore: release version $new_version"
   fi
 

@@ -35,6 +35,11 @@
   <!-- Stylesheet -->
   <link rel="stylesheet" href="assets/css/style.css" />
 
+  <!-- Single source of truth for the current release version.
+       Updated automatically by scripts/publish.sh on each release.
+       All version references on this page are injected from this value. -->
+  <script>var HANIF_VERSION = "1.0.0";</script>
+
   <!-- Structured data: SoftwareApplication -->
   <script type="application/ld+json">
   {
@@ -106,7 +111,7 @@
         <div>
           <span class="hero-eyebrow">
             <span class="dot" aria-hidden="true"></span>
-            v1.0.0 — open source &amp; MIT licensed
+            <span id="js-version-badge">v1.0.0</span> — open source &amp; MIT licensed
           </span>
           <h1>Ship faster from <span class="grad-text">your terminal.</span></h1>
           <p class="hero-lede">
@@ -659,7 +664,7 @@
           <div class="code-block">
             <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
 <pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif self-update</span>
-<span class="sh-info">→</span> Current: 0.4.0   Latest: 1.0.0
+<span class="sh-info">→</span> Current: 0.4.0   Latest: <span id="js-version-latest">1.0.0</span>
 <span class="sh-ok">✓</span> Updated successfully. Run <span class="sh-cmd">hanif help</span> to see what's new.
 
 <span class="sh-prompt">$</span> <span class="sh-cmd">hanif help</span> <span class="sh-arg">squash</span>
@@ -793,7 +798,7 @@
               <div class="code-block">
                 <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
 <pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif</span> version
-<span class="sh-out">hanif 1.0.0</span>
+<span class="sh-out">hanif <span id="js-version-verify">1.0.0</span></span>
 <span class="sh-prompt">$</span> <span class="sh-cmd">hanif</span> help</pre>
               </div>
               <p>Don't see <code>hanif</code>? Open a new terminal so your <code>PATH</code> is reloaded, or run <code>source ~/.zshrc</code> (or your equivalent).</p>
