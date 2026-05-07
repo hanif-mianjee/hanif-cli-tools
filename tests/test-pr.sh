@@ -26,6 +26,7 @@ setup() {
   (
     cd "$TEST_REPO"
     git init -q
+    git symbolic-ref HEAD refs/heads/master
     git config user.email "t@t"
     git config user.name "t"
     echo a > f && git add f && git commit -qm init
