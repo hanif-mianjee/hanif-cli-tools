@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-05-11
+
 ### Fixed
 - **`hanif pr`**: remote URL parsing now handles all Azure DevOps SSH URL formats:
   - SCP-style with any username (`myorg@vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>`) — previously only `git@` usernames were accepted.
