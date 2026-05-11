@@ -94,6 +94,22 @@ test_pr_bitbucket() {
   assert_contains "Bitbucket parses" "$out" "https://bitbucket.org/owner/repo/pull-requests/new?source=feature/login_form&dest=master"
 }
 
+test_pr_azure_devops_ssh_scp() {
+  _set_remote "myorg@vs-ssh.visualstudio.com:v3/myorg/myproj/myrepo"
+  local out
+  out=$(cd "$TEST_REPO" && "$HANIF" pr url 2>&1)
+  assert_contains "Azure DevOps SCP SSH (vs-ssh.visualstudio.com) parses" "$out" \
+    "https://dev.azure.com/myorg/myproj/_git/myrepo/pullrequestcreate?sourceRef=feature/login_form&targetRef=master"
+}
+
+test_pr_azure_devops_ssh_url() {
+  _set_remote "ssh://git@ssh.dev.azure.com/v3/myorg/myproj/myrepo"
+  local out
+  out=$(cd "$TEST_REPO" && "$HANIF" pr url 2>&1)
+  assert_contains "Azure DevOps ssh:// URL parses" "$out" \
+    "https://dev.azure.com/myorg/myproj/_git/myrepo/pullrequestcreate?sourceRef=feature/login_form&targetRef=master"
+}
+
 test_pr_custom_base() {
   _set_remote "git@github.com:foo/bar.git"
   local out
@@ -176,6 +192,8 @@ main() {
   run_test test_pr_azure_devops
   run_test test_pr_visualstudio_legacy
   run_test test_pr_bitbucket
+  run_test test_pr_azure_devops_ssh_scp
+  run_test test_pr_azure_devops_ssh_url
   run_test test_pr_custom_base
   run_test test_pr_open_action_prints_url_with_no_browser
 

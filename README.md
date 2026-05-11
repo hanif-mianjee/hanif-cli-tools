@@ -70,7 +70,10 @@ hanif serve 3000 ./dist             # Custom port + directory; prints LAN URL to
 ```
 
 `hanif pr` supports GitHub, GitLab (incl. self-hosted + subgroups), Azure DevOps,
-and Bitbucket Cloud. Set `HANIF_NO_BROWSER=1` to print the URL instead of opening
+and Bitbucket Cloud. All Azure DevOps remote URL forms are handled — HTTPS
+(`dev.azure.com`), legacy HTTPS (`org.visualstudio.com`), and both SSH variants
+(`org@vs-ssh.visualstudio.com:v3/…` and `ssh://git@ssh.dev.azure.com/v3/…`).
+Set `HANIF_NO_BROWSER=1` to print the URL instead of opening
 a browser (handy in SSH sessions). `hanif ip` respects `HANIF_OFFLINE=1` to skip
 the public-IP lookup. `hanif undo` shows only the choices that apply to the current
 repo state and double-confirms destructive actions.

@@ -28,21 +28,35 @@ _hanif_pr_parse_remote() {
   url="${url%.git}"
   url="${url%/}"
 
-  if [[ "$url" =~ ^git@([^:]+):(.+)$ ]]; then
-    # SSH form: git@host:path
+  if [[ "$url" =~ ^[^@:]+@([^:]+):(.+)$ ]]; then
+    # SSH SCP form: user@host:path  (any username, e.g. git@ or org@)
     host="${BASH_REMATCH[1]}"
     local path="${BASH_REMATCH[2]}"
+    # Azure DevOps SCP SSH: user@vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>
+    if [[ "$host" == vs-ssh.visualstudio.com ]]; then
+      host="dev.azure.com"
+      path="${path#v3/}"
+      if [[ "$path" =~ ^([^/]+)/([^/]+)/([^/]+)$ ]]; then
+        printf '%s\t%s\t%s\t%s\n' "$host" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+        return 0
+      fi
+      return 1
+    fi
     _hanif_pr_split_path "$host" "$path"
     return $?
-  elif [[ "$url" =~ ^ssh://(git@)?([^/]+)/(.+)$ ]]; then
+  elif [[ "$url" =~ ^ssh://([^@/]+@)?([^/]+)/(.+)$ ]]; then
     host="${BASH_REMATCH[2]}"
     local path="${BASH_REMATCH[3]}"
-    # Azure DevOps SSH uses ssh://git@ssh.dev.azure.com/v3/<org>/<project>/<repo>
-    if [[ "$host" == ssh.dev.azure.com ]]; then
-      # Map back to dev.azure.com web host.
+    # Azure DevOps SSH: ssh://git@ssh.dev.azure.com/v3/<org>/<project>/<repo>
+    #                   ssh://user@vs-ssh.visualstudio.com/v3/<org>/<project>/<repo>
+    if [[ "$host" == ssh.dev.azure.com || "$host" == vs-ssh.visualstudio.com ]]; then
       host="dev.azure.com"
-      # Strip leading "v3/".
       path="${path#v3/}"
+      if [[ "$path" =~ ^([^/]+)/([^/]+)/([^/]+)$ ]]; then
+        printf '%s\t%s\t%s\t%s\n' "$host" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+        return 0
+      fi
+      return 1
     fi
     _hanif_pr_split_path "$host" "$path"
     return $?
