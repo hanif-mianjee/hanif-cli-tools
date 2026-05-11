@@ -24,6 +24,7 @@ HANIF_VERSION=v1.0.0 bash <(curl -fsSL https://raw.githubusercontent.com/hanif-m
 hanif sync                          # Full sync (update main, rebase, clean)
 hanif nf add user auth              # → feature/add_user_auth (no quotes needed!)
 hanif nf "JIRA-123: fix bug"        # → feature/jira-123_fix_bug
+hanif nf OM-1460: [Data loader] fix # → feature/OM-1460_data_loader_fix (brackets ok!)
 hanif up                            # Update main/master branch
 hanif upall                         # Update all branches
 hanif clean                         # Delete branches removed from remote
@@ -51,6 +52,7 @@ Smart branch naming with `nf`:
 - Extracts ticket numbers (JIRA-123, OM-755, ABC-42)
 - Sanitizes names, converts to lowercase
 - Enforces 60 character limit
+- Shell glob characters (`[`, `]`, `*`, `?`) are stripped safely — no quoting needed (zsh `noglob` alias installed automatically)
 
 ## Productivity Commands
 

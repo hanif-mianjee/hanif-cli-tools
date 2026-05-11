@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- **`hanif nf`**: free-text descriptions containing shell glob characters (`[`, `]`, `*`, `?`) — common in Jira titles such as `OM-1460: [Data loader] - Loader Failed` — no longer cause a zsh `bad pattern` error. `install.sh` now writes `alias hanif='noglob hanif'` to `.zshrc`, which tells zsh to skip glob expansion for hanif arguments. Existing installs pick up the alias on the next `hanif self-update`. As always, quoting the whole description also works.
+
 ## [1.1.1] - 2026-05-11
 
 ### Fixed

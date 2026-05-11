@@ -125,6 +125,19 @@ update_shell_config() {
       warning "Please run: source $shell_config"
     fi
   fi
+
+  # Add noglob alias for zsh so that shell glob characters ([ ] * ?) in
+  # free-text arguments (e.g. hanif nf OM-1: [Data loader]) are passed
+  # through literally instead of being expanded — or erroring — before
+  # the hanif binary receives them. Bash does not need this (it only errors
+  # on unmatched globs when 'failglob' is set, which is off by default).
+  if [[ "$shell_name" == "zsh" ]]; then
+    if ! grep -q "noglob hanif" "$shell_config" 2>/dev/null; then
+      echo "alias hanif='noglob hanif'" >> "$shell_config"
+      success "Added noglob alias for hanif in $shell_config"
+      warning "Please run: source $shell_config"
+    fi
+  fi
 }
 
 # Verify installation

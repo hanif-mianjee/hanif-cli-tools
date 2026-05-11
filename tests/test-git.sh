@@ -107,6 +107,22 @@ test_newfeature_special_chars() {
   assert_equals "Creates branch without double underscores" "feature/fix_bug" "$current_branch"
 }
 
+# Test: Git helper - newfeature with bracket characters (e.g. Jira titles like
+# "OM-1460: [Data loader] - Loader Failed").  These chars arrive quoted from
+# the shell layer; the sanitizer must strip [] and produce a clean branch name.
+test_newfeature_bracket_chars() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  newfeature "OM-1460: [Data loader] - Loader Failed" >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "Creates branch from bracket-containing description" \
+    "feature/OM-1460_data_loader_loader_failed" "$current_branch"
+}
+
 # Test: CLI executable exists
 test_cli_executable() {
   assert_file_exists "Main CLI executable exists" "$PROJECT_ROOT/bin/hanif"
@@ -158,6 +174,7 @@ main() {
   run_test test_newfeature_basic
   run_test test_newfeature_with_ticket
   run_test test_newfeature_special_chars
+  run_test test_newfeature_bracket_chars
   
   suite "CLI Interface"
   test_cli_executable
