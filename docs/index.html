@@ -363,8 +363,8 @@
             </span>
             <div class="cmd-title">
               <h3><code>hanif squash</code> — interactive commit squashing</h3>
-              <div class="cmd-subtitle">Pick a commit to squash into. Hanif handles the rebase and writes a clean message that preserves every original commit hash.</div>
-              <div class="cmd-aliases"><span class="tag">hanif squash</span><span class="tag">hanif squash 5</span><span class="tag">hanif squash --help</span></div>
+              <div class="cmd-subtitle">Pick a commit to squash into — or pass a hash (or a hash range) directly. Hanif handles the rebase and writes a clean message that preserves every original commit hash.</div>
+              <div class="cmd-aliases"><span class="tag">hanif squash</span><span class="tag">hanif squash 5</span><span class="tag">hanif squash &lt;hash&gt;</span><span class="tag">hanif squash &lt;older&gt; &lt;newer&gt;</span><span class="tag">hanif squash --help</span></div>
             </div>
           </header>
 
@@ -405,6 +405,26 @@
             <div class="code-block">
               <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
 <pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif squash</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: You already know the base hash</h4>
+            <p>Skip the picker entirely. Pass the commit hash and Hanif squashes everything from that commit through <code>HEAD</code> into one — same custom-message prompt, no scrolling through a list.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif squash</span> <span class="sh-arg">1a6c6d8</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: Squash a range, keep the trailing commits</h4>
+            <p>Pass two hashes — <code>&lt;older&gt; &lt;newer&gt;</code> — and Hanif squashes the inclusive range, then cherry-picks every commit that came after <code>&lt;newer&gt;</code> back on top. Requires a clean working tree and a checked-out branch; the original <code>HEAD</code> is printed so you can recover via <code>git reset --hard</code> if anything goes wrong.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif squash</span> <span class="sh-arg">1a6c6d8</span> <span class="sh-arg">ef3798f</span>
 </pre>
             </div>
           </div>

@@ -85,11 +85,18 @@ repo state and double-confirms destructive actions.
 Interactive commit squashing with smart message formatting:
 
 ```bash
-hanif squash          # Shows last 20 commits (default)
-hanif squash 5        # Shows last 5 commits
+hanif squash                       # Picker: last 20 commits (default)
+hanif squash 5                     # Picker: last 5 commits
+hanif squash 1a6c6d8               # Skip picker — squash <hash>..HEAD
+hanif squash 1a6c6d8 ef3798f       # Squash an inclusive range,
+                                   # preserving commits after <newer>
 ```
 
-**Workflow:** Select a commit to squash into, then optionally provide a custom message. All squashed commits are preserved with their hashes in the final message.
+**Workflow:** Select (or pass) a commit to squash into, then optionally provide a custom message. All squashed commits are preserved with their hashes in the final message.
+
+**Hash mode** (`hanif squash <hash>`): skips the interactive picker and squashes every commit from `<hash>` through `HEAD` into a single commit. Same custom-message prompt as the picker.
+
+**Range mode** (`hanif squash <older> <newer>`): squashes the inclusive range, then cherry-picks any commits that came after `<newer>` back on top. Requires a clean working tree, a checked-out branch (no detached `HEAD`), and `<older>` must be an ancestor of `<newer>`. The original `HEAD` is printed so you can recover via `git reset --hard <hash>` if anything goes wrong.
 
 Result with custom message:
 ```

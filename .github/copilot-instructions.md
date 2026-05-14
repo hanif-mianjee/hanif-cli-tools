@@ -16,6 +16,7 @@ These instructions apply to every agent/chat session working in this repository.
 - **Always check `docs/index.html`** for any corresponding section (command cards, feature descriptions, tag lists) and update it too.
 - If a command's supported inputs, flags, environment variables, or host/provider coverage changes, update all three: `README.md`, `docs/index.html`, and the inline `--help` text in `lib/commands/<cmd>.sh`.
 - Do not add docs for things that weren't changed. Keep additions scoped to what actually changed.
+- Aways include examples for new commands or parameter change
 
 ## Tests
 

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- **`hanif squash <hash>`**: skip the interactive picker by passing a commit hash directly. Hanif squashes every commit from `<hash>` through `HEAD` into one, with the same custom-message prompt as the picker flow.
+- **`hanif squash <older> <newer>`**: squash an inclusive commit range without losing the work that came after it. Hanif squashes `<older>..<newer>` into a single commit, then cherry-picks every commit that was on top of `<newer>` back on. Refuses to run with a dirty working tree, a detached `HEAD`, or when `<older>` is not an ancestor of `<newer>`. Prints the original `HEAD` so you can recover via `git reset --hard <hash>` if anything goes wrong. Pure-digit arguments still mean "count" — backwards compatible with `hanif squash 5`.
+
 ### Fixed
 - **`hanif nf`**: free-text descriptions containing shell glob characters (`[`, `]`, `*`, `?`) — common in Jira titles such as `OM-1460: [Data loader] - Loader Failed` — no longer cause a zsh `bad pattern` error. `install.sh` now writes `alias hanif='noglob hanif'` to `.zshrc`, which tells zsh to skip glob expansion for hanif arguments. Existing installs pick up the alias on the next `hanif self-update`. As always, quoting the whole description also works.
 
