@@ -7,7 +7,7 @@
 
   <title>Hanif CLI — A delightful productivity CLI for daily developer workflows</title>
   <meta name="description" content="Hanif CLI is a fast, friendly command-line tool that automates everyday git work — sync, smart branch names, interactive squash, semantic versioning, env vars, multi-account git setup, and SVG conversion. One curl command to install." />
-  <meta name="keywords" content="hanif cli, git productivity, git automation, interactive squash, semantic versioning, bumpversion, git profiles, ssh keys, env variables, svg to png, developer cli, bash cli, terminal productivity" />
+  <meta name="keywords" content="hanif cli, git productivity, git automation, interactive squash, semantic versioning, bumpversion, git profiles, ssh keys, env variables, svg to png, developer cli, bash cli, terminal productivity, pre-commit hooks, git hooks" />
   <meta name="author" content="Hanif Mianjee" />
   <meta name="theme-color" content="#6d4cff" />
   <link rel="canonical" href="https://hanif-mianjee.github.io/hanif-cli-tools/" />
@@ -256,6 +256,15 @@
             <h3>One‑step .gitignore</h3>
             <p><code>hanif gi .env</code> appends to <code>.gitignore</code> AND removes the file from git tracking — without deleting it from disk.</p>
             <a class="feature-link" href="#cmd-gi">Gitignore examples →</a>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>Pre‑commit hooks, batteries included</h3>
+            <p><code>hanif pre-commit</code> auto‑detects your stack, picks the right safety checks, and writes a pure‑shell <code>.git/hooks/pre-commit</code>. No Husky, no Python framework.</p>
+            <a class="feature-link" href="#cmd-pre-commit">Pre‑commit examples →</a>
           </article>
 
           <article class="feature-card">
@@ -584,6 +593,71 @@
 </pre>
             </div>
             <p>Re‑running <code>hanif gsetup work</code> updates the existing <code>includeIf</code> block in place — no duplicates, ever.</p>
+          </div>
+        </article>
+
+        <!-- ----- pre-commit ----- -->
+        <article class="cmd-block" id="cmd-pre-commit">
+          <header class="cmd-head">
+            <span class="feature-icon icon-grad-3" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="cmd-title">
+              <h3><code>hanif pre-commit</code> — pure-shell hooks, batteries included</h3>
+              <div class="cmd-subtitle">Auto-detects your stack (Node / Python / Rust / Go / Java / Ruby / PHP), shows a menu of common checks, lets you add your own. No Husky, no Python, no Node — just a clean <code>.git/hooks/pre-commit</code> script.</div>
+              <div class="cmd-aliases"><span class="tag">hanif pre-commit</span><span class="tag">hanif pc</span><span class="tag">hanif pc list</span><span class="tag">hanif pc run</span><span class="tag">hanif pc remove</span></div>
+            </div>
+          </header>
+
+          <div class="scenario">
+            <h4>Scenario: One-shot setup in a Node + Python repo</h4>
+            <p>Detect the stack, pick a subset, install. Re-run any time to update — the managed block is rewritten in place.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif pre-commit</span>
+<span class="sh-out">Detected: Node.js, Python</span>
+
+<span class="sh-out">  Universal</span>
+<span class="sh-out">   1) protect-branches        Block commits to main/master</span>
+<span class="sh-out">   2) no-merge-markers        Reject &lt;&lt;&lt;&lt;&lt;&lt;&lt; / ======= / &gt;&gt;&gt;&gt;&gt;&gt;&gt;</span>
+<span class="sh-out">   3) no-large-files          Reject staged files &gt; 5MB</span>
+<span class="sh-out">   4) no-secrets              AWS keys / private-key headers / common tokens</span>
+<span class="sh-out">   …</span>
+<span class="sh-out">  Node.js</span>
+<span class="sh-out">   8) node-lint               Run lint via detected package manager</span>
+<span class="sh-out">   …</span>
+<span class="sh-out">  Python</span>
+<span class="sh-out">  12) py-ruff                 ruff check on staged .py</span>
+<span class="sh-out">   …</span>
+
+<span class="sh-prompt">?</span> Select  <span class="sh-arg">1,2,4,8,12</span>
+<span class="sh-ok">✓</span> Wrote .git/hooks/pre-commit
+<span class="sh-info">→</span> Try it now:   <span class="sh-cmd">hanif pre-commit run</span>
+</pre>
+            </div>
+          </div>
+
+          <div class="scenario">
+            <h4>Scenario: The hook catches three problems in one pass</h4>
+            <p>No fail-fast — every check runs, every failure is reported. Skip a noisy check just for one commit with <code>HANIF_PRECOMMIT_SKIP</code>.</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">git</span> commit -m "wip"
+<span class="sh-ok">✓</span> protect-branches
+<span class="sh-err">✗</span> no-merge-markers — merge conflict markers found in staged additions
+<span class="sh-err">✗</span> no-secrets — potential secrets: aws-access-key
+<span class="sh-out">–</span> py-ruff (no .py staged)
+<span class="sh-err">✗</span> node-lint — npm run lint failed
+
+<span class="sh-err">3 check(s) failed:</span>
+  - no-merge-markers
+  - no-secrets
+  - node-lint
+
+<span class="sh-prompt">$</span> <span class="sh-cmd">HANIF_PRECOMMIT_SKIP=node-lint</span> <span class="sh-cmd">git</span> commit -m "wip"   <span class="sh-comment"># bypass just one check</span>
+</pre>
+            </div>
+            <p>Re-running <code>hanif pre-commit</code> updates the managed block in place — anything you've added outside the marker comments stays put. Pre-existing unmanaged hooks are backed up to <code>pre-commit.bak.&lt;timestamp&gt;</code> before being replaced.</p>
           </div>
         </article>
 

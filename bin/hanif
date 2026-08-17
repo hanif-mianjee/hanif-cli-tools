@@ -95,6 +95,7 @@ Git Commands:
   undo                Interactive 'undo the last git thing' menu
   stash <subcommand>  Friendlier git stash (save/list/pop/drop)
   pr [url|copy]       Open the current branch's pull request page
+  pre-commit [sub]    Install / manage a .git/hooks/pre-commit script
 
 Productivity Commands:
   clip [paste]        Cross-platform clipboard (copy/paste)

@@ -46,6 +46,10 @@ hanif stash pop                     # Pop (interactive picker if >1)
 hanif pr                            # Open the current branch's PR/compare page
 hanif pr url                        # Print the PR URL only
 hanif pr copy                       # Copy the PR URL to the clipboard
+hanif pre-commit                    # Interactive pre-commit hook setup
+hanif pc list                       # Show what's currently installed
+hanif pc run                        # Dry-run the hook against the staged set
+hanif pc remove                     # Uninstall (with backup)
 ```
 
 Smart branch naming with `nf`:
@@ -114,6 +118,47 @@ Third commit
 ```
 
 Run `hanif squash --help` for the full guide.
+
+## Pre-Commit Hook Manager
+
+Drop a pure-shell, dependency-free `.git/hooks/pre-commit` into any repo. Hanif auto-detects the project stack (Node, Python, Rust, Go, Java, Ruby, PHP, or none), shows you a menu of common checks plus a slot for custom commands, and writes the hook for you. Re-running rewrites only the managed block — anything you add outside the markers is preserved.
+
+```bash
+hanif pre-commit                    # Interactive: detect stack, pick checks, install
+hanif pc                            # Same — short alias
+hanif pre-commit list               # Show what's currently installed
+hanif pre-commit run                # Dry-run the hook against the staged set
+hanif pre-commit remove             # Uninstall (with timestamped backup)
+```
+
+**The catalog of checks:**
+
+- **Universal:** `protect-branches` (block `main`/`master`), `no-merge-markers`, `no-large-files` (configurable MB limit), `no-secrets` (AWS keys, PEM headers, common token env names), `no-env-files`, `no-trailing-whitespace`, `no-debug` (stack-aware: `console.log`/`pdb.set_trace`/`dbg!`/`dd(`/`binding.pry`).
+- **Node.js:** lint via npm/yarn/pnpm/bun (auto-detected from lockfile), Prettier `--check` on staged JS/TS, test script, `tsc --noEmit`.
+- **Python:** `ruff check`, `ruff format --check` (falls back to `black --check`), `mypy`, `pytest`.
+- **Rust:** `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`.
+- **Go:** `gofmt -l`, `go vet`, `go test`.
+- **Java:** `mvn verify` or `./gradlew check`. **Ruby:** `bundle exec rspec`. **PHP:** `composer test`.
+- **Custom:** any free-form shell command(s) you supply at install time.
+
+The generated hook accumulates failures across all checks (no fail-fast) so you see every problem at once. Stack-specific checks gracefully skip when their tool isn't installed — a teammate without `cargo` can still commit. At commit time, `HANIF_PRECOMMIT_SKIP=<id1,id2>` lets you bypass specific checks without `--no-verify`.
+
+**Examples:**
+
+```bash
+# Interactive setup — pick a subset of checks from the menu
+hanif pre-commit
+
+# Non-interactive (CI / scripted setup)
+HANIF_PRE_COMMIT_YES=1 \
+HANIF_PRE_COMMIT_CHECKS=protect-branches,no-merge-markers,no-secrets,node-lint \
+  hanif pre-commit
+
+# Skip a noisy check just this one commit
+HANIF_PRECOMMIT_SKIP=node-test git commit -m "wip"
+```
+
+Run `hanif pre-commit --help` for the full guide.
 
 ## Gitignore Command
 

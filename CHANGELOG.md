@@ -3,6 +3,16 @@
 ## [Unreleased]
 
 ### Added
+- **New command: `hanif pre-commit`** (alias `hanif pc`) — interactive installer for a pure-shell `.git/hooks/pre-commit` script tailored to the project's detected stack(s).
+  - Auto-detects Node.js, Python, Rust, Go, Java, Ruby, and PHP via standard marker files (`package.json`, `pyproject.toml`/`setup.py`/`setup.cfg`/`requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`/`build.gradle`, `Gemfile`, `composer.json`).
+  - Curated catalog of checks: universal safety nets (`protect-branches`, `no-merge-markers`, `no-large-files`, `no-secrets`, `no-env-files`, `no-trailing-whitespace`, `no-debug`) plus per-stack lint / format / test / typecheck options. Stack-specific checks gracefully skip when their tool isn't installed (e.g. a teammate without `cargo` still commits cleanly).
+  - Multi-select picker with keyword shortcuts: `all`, `none`, `universal`, `recommended` (Enter = recommended).
+  - Free-form custom commands — add any number of your own shell commands alongside the curated checks; single-quote-safe encoding survives apostrophes.
+  - Generated hook is delimited by `# >>> hanif pre-commit: managed >>>` / `# <<< hanif pre-commit: managed <<<` markers. Re-running `hanif pre-commit` rewrites only the managed block; anything you added outside the markers is preserved verbatim. Pre-existing unmanaged hooks are backed up to `pre-commit.bak.<UTC-timestamp>` before being replaced.
+  - Failure model in the generated hook: accumulate failures across all checks (no fail-fast) so the user sees every problem on a single run. `HANIF_PRECOMMIT_SKIP=<id1,id2>` at commit time lets you bypass specific checks without `--no-verify`.
+  - Subcommands: `hanif pre-commit` (setup), `hanif pre-commit list` (show installed state + selected check IDs + generation timestamp), `hanif pre-commit run` (dry-run the hook against the current staged set), `hanif pre-commit remove` (uninstall — deletes file if purely managed, strips just the managed block if user content exists outside the markers; always writes a timestamped backup).
+  - Warns clearly when `git config core.hooksPath` is set elsewhere — the hook is still written to `.git/hooks/pre-commit` (the git-native location), and the user is told how to wire it up.
+  - Non-interactive mode for CI / automation: `HANIF_PRE_COMMIT_YES=1`, `HANIF_PRE_COMMIT_CHECKS=<id-list>`, `HANIF_PRE_COMMIT_CUSTOM=<cmds>`.
 - **`hanif squash <hash>`**: skip the interactive picker by passing a commit hash directly. Hanif squashes every commit from `<hash>` through `HEAD` into one, with the same custom-message prompt as the picker flow.
 - **`hanif squash <older> <newer>`**: squash an inclusive commit range without losing the work that came after it. Hanif squashes `<older>..<newer>` into a single commit, then cherry-picks every commit that was on top of `<newer>` back on. Refuses to run with a dirty working tree, a detached `HEAD`, or when `<older>` is not an ancestor of `<newer>`. Prints the original `HEAD` so you can recover via `git reset --hard <hash>` if anything goes wrong. Pure-digit arguments still mean "count" — backwards compatible with `hanif squash 5`.
 

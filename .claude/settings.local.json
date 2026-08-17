@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test:*)",
+      "Bash(bash:*)",
+      "Bash(HANIF_SKIP_UPDATE_CHECK=1 bin/hanif pre-commit --help)",
+      "Bash(HANIF_SKIP_UPDATE_CHECK=1 bin/hanif help pre-commit)",
+      "Bash(HANIF_SKIP_UPDATE_CHECK=1 bin/hanif pc --help)",
+      "Bash(HANIF_SKIP_UPDATE_CHECK=1 bin/hanif help)"
+    ]
+  }
+}
