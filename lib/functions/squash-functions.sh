@@ -91,25 +91,36 @@ _git_squash_run_from_base() {
   fi
 
   # Build a temp script for GIT_SEQUENCE_EDITOR that turns every "pick"
-  # line after the first into "squash". Use mktemp securely.
+  # line after the first into "fixup". Use mktemp securely.
+  #
+  # "fixup" rather than "squash" on purpose: "squash" concatenates the messages
+  # and then opens the *commit message* editor (a separate editor from
+  # GIT_SEQUENCE_EDITOR) to confirm the combined text. With no usable editor —
+  # CI, cron, any non-interactive shell — that step cannot complete, the rebase
+  # stalls part-way and HEAD is left carrying git's own "# This is a
+  # combination of N commits." message. "fixup" discards the squashed messages
+  # and needs no editor, which is exactly right here because we overwrite the
+  # message ourselves with `git commit --amend -F` immediately below.
   local seq_script
   seq_script=$(mktemp)
   chmod 700 "$seq_script"
   if [[ "$(uname -s)" == "Darwin" ]]; then
     cat > "$seq_script" <<'EOSCRIPT'
 #!/bin/bash
-sed -i '' '2,$s/^pick /squash /' "$1"
+sed -i '' '2,$s/^pick /fixup /' "$1"
 EOSCRIPT
   else
     cat > "$seq_script" <<'EOSCRIPT'
 #!/bin/bash
-sed -i '2,$s/^pick /squash /' "$1"
+sed -i '2,$s/^pick /fixup /' "$1"
 EOSCRIPT
   fi
   chmod +x "$seq_script"
 
+  # GIT_EDITOR=true belts-and-braces the above: should any step still want an
+  # editor, it gets a no-op instead of vi against a non-tty stdin.
   local rebase_ok=true
-  GIT_SEQUENCE_EDITOR="$seq_script" "${rebase_cmd[@]}" || rebase_ok=false
+  GIT_EDITOR=true GIT_SEQUENCE_EDITOR="$seq_script" "${rebase_cmd[@]}" || rebase_ok=false
 
   rm -f "$seq_script"
 
