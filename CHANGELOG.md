@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-17
+
 ### Added
 - **New command: `hanif pre-commit`** (alias `hanif pc`) — interactive installer for a pure-shell `.git/hooks/pre-commit` script tailored to the project's detected stack(s).
   - Auto-detects Node.js, Python, Rust, Go, Java, Ruby, and PHP via standard marker files (`package.json`, `pyproject.toml`/`setup.py`/`setup.cfg`/`requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`/`build.gradle`, `Gemfile`, `composer.json`).

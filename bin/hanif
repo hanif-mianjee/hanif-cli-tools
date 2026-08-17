@@ -38,7 +38,7 @@ export UTILS_DIR="${LIB_DIR}/utils"
 export FUNCTIONS_DIR="${LIB_DIR}/functions"
 
 # CLI version — single source of truth.
-VERSION="1.1.1"
+VERSION="1.2.0"
 export VERSION
 
 # ---------------------------------------------------------------------------
