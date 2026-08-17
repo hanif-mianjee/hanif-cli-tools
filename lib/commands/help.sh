@@ -71,6 +71,9 @@ show_help() {
     stash)
       show_stash_help
       ;;
+    pre-commit|pc|precommit)
+      show_pre_commit_help
+      ;;
     # Git subcommands route to the git help screen.
     sync|nf|up|upall|clean|rb|pull|st|amend|gitignore|gi)
       show_git_help
@@ -110,6 +113,7 @@ GIT COMMANDS
   undo                 Interactive 'undo the last git thing' menu
   stash <subcommand>   Friendlier git stash (save/list/pop/drop)
   pr [url|copy]        Open the current branch's pull request page
+  pre-commit [sub]     Install / manage a .git/hooks/pre-commit script
 
 PRODUCTIVITY COMMANDS
   clip [paste|detect]  Cross-platform clipboard (copy/paste)
