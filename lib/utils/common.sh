@@ -255,14 +255,19 @@ check_git_version() {
 # ---------------------------------------------------------------------------
 
 # Sanitize an arbitrary string into a git-branch-safe slug:
-#   "Fix - Bug!" -> "fix_bug"
+#   "Fix - Bug!"                 -> "fix_bug"
+#   "catalog.my_table"           -> "catalog_my_table"
 sanitize_branch_name() {
   local input="$1"
 
-  # Keep only alphanumeric, spaces, underscores, hyphens; collapse runs of
-  # spaces/underscores/hyphens into a single space.
+  # Replace every disallowed character with a space so it acts as a word
+  # *separator*. Deleting them instead (tr -cd) silently glues words together —
+  # "a.b" became "ab" rather than "a_b", which mangles dotted identifiers like
+  # table or package names pasted in from a ticket title.
+  # printf rather than echo: a description may legitimately start with "-n" or
+  # contain backslashes, which some echo implementations would eat.
   local clean
-  clean=$(echo "$input" | tr -cd '[:alnum:] _-' | sed -E 's/[[:space:]_-]+/ /g')
+  clean=$(printf '%s' "$input" | tr -c '[:alnum:]_-' ' ' | sed -E 's/[[:space:]_-]+/ /g')
 
   # Spaces -> underscores.
   clean=$(echo "$clean" | tr ' ' '_')

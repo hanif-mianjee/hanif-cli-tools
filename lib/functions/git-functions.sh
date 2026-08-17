@@ -133,77 +133,132 @@ gitclean() {
   fi
 }
 
-# newfeature - Create a new feature branch with smart naming
-# Usage: newfeature "description"
+# newfeature - Create a new branch with smart naming
+# Usage: newfeature [--prefix <p> | --no-prefix] <description>
 #        newfeature "TICKET-123: description"
-# 
+#
+# The branch prefix defaults to "feature" and is resolved in this order:
+#   1. --prefix <p> / -p <p> / --no-prefix   (this invocation only)
+#   2. $HANIF_NF_PREFIX                      (persist with: hanif env set)
+#   3. "feature"
+#
 # Examples:
 #   newfeature "add user authentication"
 #     → creates: feature/add_user_authentication
-#   
+#
 #   newfeature "OM-755: fix login bug"
-#     → creates: feature/om-755_fix_login_bug
-#   
-#   newfeature "JIRA-123 Update API endpoints"
-#     → creates: feature/jira-123_update_api_endpoints
+#     → creates: feature/OM-755_fix_login_bug
+#
+#   newfeature --prefix hotfix "OM-755: fix login bug"
+#     → creates: hotfix/OM-755_fix_login_bug
+#
+#   newfeature --no-prefix "spike idea"
+#     → creates: spike_idea
 newfeature() {
   is_git_repo || { error "Not a git repository"; return 1; }
 
+  # ---- Leading flags -----------------------------------------------------
+  # Parsed here rather than only in the command handler so the exported
+  # ``newfeature`` shell function behaves identically to ``hanif nf``. Parsing
+  # stops at the first non-flag word, so the description itself may still
+  # contain anything — including a literal "--prefix" — beyond that point.
+  local prefix="${HANIF_NF_PREFIX-feature}"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --prefix|-p)
+        if [[ $# -lt 2 ]]; then
+          error "Missing value for $1"
+          hint "  newfeature --prefix hotfix 'OM-755: fix login bug'"
+          return 1
+        fi
+        prefix="$2"
+        shift 2
+        ;;
+      --no-prefix)
+        prefix=""
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
   if [[ -z "${1:-}" ]]; then
-    error "Usage: newfeature <description>"
+    error "Usage: newfeature [--prefix <p>|--no-prefix] <description>"
     hint "  newfeature add login form"
-    hint "  newfeature \"TICKET-123: add login form\""
+    hint "  newfeature 'TICKET-123: add login form'"
     return 1
   fi
 
-  # Step 1: Extract optional ticket number from start of input
+  # Join the remaining words so quoting stays optional.
+  local input="$*"
+
+  # Normalise the prefix: drop a trailing slash (exactly one is added below)
+  # and reject anything git would not accept inside a ref path.
+  prefix="${prefix%/}"
+  if [[ -n "$prefix" && ! "$prefix" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+    error "Invalid branch prefix: $prefix"
+    hint "  Use letters, numbers and . _ / - only (e.g. --prefix hotfix)"
+    return 1
+  fi
+
+  # Step 1: Extract optional ticket number from start of input.
   # Matches patterns like: OM-755, JIRA-123, ABC-42
   # Example: "OM-755: fix bug" → ticket="OM-755"
-  local ticket=$(echo "$1" | grep -oE '^[A-Za-z]+-[0-9]+')
-  
-  # Step 2: Get description (remove ticket if it was found)
-  # Example: "OM-755: fix bug" → description=": fix bug"
-  # Example: "fix bug" → description="fix bug"
-  local description="$1"
-  [[ -n "$ticket" ]] && description=$(echo "$1" | sed "s/^$ticket//")
-  
-  # Step 3: Clean description to be git-branch-safe
-  # - Keep only: letters, numbers, spaces, underscores, hyphens
-  # - Collapse multiple spaces/hyphens into single space
-  # - Convert spaces to underscores
-  # Example: ": fix - bug!" → "fix_bug"
-  local clean=$(echo "$description" | tr -cd '[:alnum:] _-' | sed -E 's/[[:space:]_-]+/ /g' | tr ' ' '_')
+  local ticket
+  ticket=$(printf '%s' "$input" | grep -oE '^[A-Za-z]+-[0-9]+' || true)
 
-  # Step 4: Normalize multiple underscores to single underscore
-  # Example: "__fix_bug" → "_fix_bug"
-  clean=$(echo "$clean" | sed -E 's/_+/_/g')
-  
-  # Step 5: Trim leading/trailing underscores
-  # Example: "_fix_bug" → "fix_bug"
-  clean=$(echo "$clean" | sed 's/^_//; s/_$//')
-  
-  # Step 6: Convert to lowercase for consistency
-  # Example: "Fix_Bug" → "fix_bug"
-  clean=$(echo "$clean" | tr '[:upper:]' '[:lower:]')
-  
-  # Step 7: Build final branch name
-  # With ticket: feature/om-755_fix_bug
-  # Without ticket: feature/fix_bug
-  local branch_name
+  # Step 2: Get description (remove the ticket if one was found). Parameter
+  # expansion rather than sed, so no part of the input is ever interpreted as
+  # a regular expression.
+  local description="${input#"$ticket"}"
+
+  # Step 3: Slugify. sanitize_branch_name (lib/utils/common.sh) is the shared
+  # implementation: it turns disallowed characters into word separators,
+  # collapses runs, trims and lowercases.
+  local clean
+  clean=$(sanitize_branch_name "$description")
+
+  # Step 4: Build the name. The ticket keeps its original case so the branch
+  # still matches the ID in Jira / Azure Boards.
+  local branch_name="$clean"
   if [[ -n "$ticket" ]]; then
-    # ticket=$(echo "$ticket" | tr '[:upper:]' '[:lower:]')  # lowercase ticket too
-    branch_name="feature/${ticket}_${clean}"
-  else
-    branch_name="feature/${clean}"
+    if [[ -n "$clean" ]]; then
+      branch_name="${ticket}_${clean}"
+    else
+      branch_name="$ticket"
+    fi
   fi
-  
-  # Step 8: Enforce max length (60 chars) to keep branch names reasonable
-  # Example: very long name → truncated to 60 chars
-  branch_name=$(echo "$branch_name" | cut -c1-60)
-  
-  # Step 9: Final cleanup - remove trailing underscore if truncation created one
-  # Example: "feature/om-755_very_long_name_" → "feature/om-755_very_long_name"
-  branch_name=$(echo "$branch_name" | sed 's/_$//')
+
+  # A description made only of punctuation sanitizes away to nothing; without
+  # this we would hand git a bare "feature/" and surface a cryptic git error.
+  if [[ -z "$branch_name" ]]; then
+    error "Description contains no usable characters: $input"
+    hint "  Include at least one letter or number, e.g. 'OM-755: fix login bug'"
+    return 1
+  fi
+
+  [[ -n "$prefix" ]] && branch_name="${prefix}/${branch_name}"
+
+  # Step 5: Enforce max length (60 chars) to keep branch names reasonable,
+  # trimming back to the last word boundary instead of cutting mid-word.
+  if [[ ${#branch_name} -gt 60 ]]; then
+    branch_name="${branch_name:0:60}"
+    local trimmed="${branch_name%_*}"
+    # Only trim back if a boundary exists after the prefix, so we can never
+    # reduce the name to just the prefix.
+    if [[ "$trimmed" != "$branch_name" && -n "${trimmed##*/}" ]]; then
+      branch_name="$trimmed"
+    fi
+  fi
+
+  # Drop a separator left dangling by truncation.
+  branch_name="${branch_name%[-_]}"
 
   step "Creating branch" "$branch_name"
   git checkout -b "$branch_name"
