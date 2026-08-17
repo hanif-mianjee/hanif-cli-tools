@@ -134,7 +134,9 @@ EOSCRIPT
     rm -f "$msg_file"
 
     if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
-      git rebase --continue >/dev/null 2>&1
+      # GIT_EDITOR=true for the same reason as the rebase itself: --continue
+      # would otherwise open the commit-message editor and block here.
+      GIT_EDITOR=true git rebase --continue >/dev/null 2>&1
     fi
 
     success "Squash complete!"
