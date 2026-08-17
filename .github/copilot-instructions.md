@@ -32,4 +32,7 @@ These instructions apply to every agent/chat session working in this repository.
   - Common types: `fix`, `feat`, `refactor`, `docs`, `test`, `chore`.
   - Scope is the command name, e.g. `fix(pr): …`, `feat(env): …`.
 - The commit body should list the key changes as bullet points (matching the CHANGELOG entry).
+- **Never add author or co-author trailers to commits.** No `Co-Authored-By:`, no `Signed-off-by:`,
+  no "Generated with …" or other tool-attribution lines, and never pass `--author`. The commit author
+  is the repository owner's configured git identity and nothing else.
 - Never use `--no-verify` or bypass pre-commit hooks.
