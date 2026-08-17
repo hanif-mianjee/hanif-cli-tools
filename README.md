@@ -23,8 +23,11 @@ HANIF_VERSION=v1.0.0 bash <(curl -fsSL https://raw.githubusercontent.com/hanif-m
 ```bash
 hanif sync                          # Full sync (update main, rebase, clean)
 hanif nf add user auth              # → feature/add_user_auth (no quotes needed!)
-hanif nf "JIRA-123: fix bug"        # → feature/jira-123_fix_bug
+hanif nf 'JIRA-123: fix bug'        # → feature/JIRA-123_fix_bug
 hanif nf OM-1460: [Data loader] fix # → feature/OM-1460_data_loader_fix (brackets ok!)
+hanif nf                            # Prompt for the description (paste anything)
+hanif nf --prefix hotfix 'OM-9: x'  # → hotfix/OM-9_x
+hanif nf --no-prefix 'spike idea'   # → spike_idea (no prefix at all)
 hanif up                            # Update main/master branch
 hanif upall                         # Update all branches
 hanif clean                         # Delete branches removed from remote
@@ -53,10 +56,25 @@ hanif pc remove                     # Uninstall (with backup)
 ```
 
 Smart branch naming with `nf`:
-- Extracts ticket numbers (JIRA-123, OM-755, ABC-42)
-- Sanitizes names, converts to lowercase
-- Enforces 60 character limit
-- Shell glob characters (`[`, `]`, `*`, `?`) are stripped safely — no quoting needed (zsh `noglob` alias installed automatically)
+
+- Extracts ticket numbers (JIRA-123, OM-755, ABC-42) and keeps their original case
+- Sanitizes names, converts to lowercase; punctuation becomes a word separator, so
+  `catalog.my_table` stays readable as `catalog_my_table`
+- Enforces a 60 character limit, trimming back to the last whole word
+- Prefix defaults to `feature/`, overridable per run with `--prefix <p>` / `--no-prefix`,
+  or globally with `HANIF_NF_PREFIX` (`hanif env set HANIF_NF_PREFIX bugfix`)
+- Shell glob characters (`[`, `]`, `*`, `?`) are handled safely — no quoting needed
+  (zsh `noglob` alias installed automatically)
+
+> **Titles containing `` ` ``, `<`, `>` or `$`** are interpreted by your *shell* before `hanif`
+> receives them, and **double quotes do not protect them** — backticks run as a command and
+> `<word>` becomes a redirection, so part of your title is silently dropped. Either single-quote
+> the title, or run bare `hanif nf` and paste it at the prompt:
+>
+> ```bash
+> hanif nf 'OM-900: create `<env>_catalog.my_table` in all envs'   # safe
+> hanif nf                                                    # safest — prompts, no quoting at all
+> ```
 
 ## Productivity Commands
 
@@ -76,9 +94,11 @@ hanif serve 3000 ./dist             # Custom port + directory; prints LAN URL to
 ```
 
 `hanif pr` supports GitHub, GitLab (incl. self-hosted + subgroups), Azure DevOps,
-and Bitbucket Cloud. All Azure DevOps remote URL forms are handled — HTTPS
-(`dev.azure.com`), legacy HTTPS (`org.visualstudio.com`), and both SSH variants
-(`org@vs-ssh.visualstudio.com:v3/…` and `ssh://git@ssh.dev.azure.com/v3/…`).
+and Bitbucket Cloud. Azure DevOps remote URLs are handled in every form Azure
+hands out — HTTPS (`dev.azure.com`), legacy HTTPS (`org.visualstudio.com`),
+SCP-style SSH (`git@ssh.dev.azure.com:v3/…`, `org@vs-ssh.visualstudio.com:v3/…`)
+and `ssh://` URLs with or without an explicit port
+(`ssh://git@ssh.dev.azure.com/v3/…`).
 Set `HANIF_NO_BROWSER=1` to print the URL instead of opening
 a browser (handy in SSH sessions). `hanif ip` respects `HANIF_OFFLINE=1` to skip
 the public-IP lookup. `hanif undo` shows only the choices that apply to the current
