@@ -49,8 +49,13 @@ test_sanitize_branch_name() {
   result=$(sanitize_branch_name "Test Feature")
   assert_equals "Sanitize with spaces" "test_feature" "$result"
   
+  # Punctuation separates words rather than being deleted — deleting it glued
+  # "a.b" into "ab", which mangled dotted identifiers pasted from ticket titles.
   result=$(sanitize_branch_name "Test!@#$%Feature")
-  assert_equals "Sanitize with special chars" "testfeature" "$result"
+  assert_equals "Sanitize with special chars" "test_feature" "$result"
+
+  result=$(sanitize_branch_name "catalog.my_table")
+  assert_equals "Sanitize keeps dotted identifiers separated" "catalog_my_table" "$result"
   
   # Note: leading/trailing spaces become underscores, then get trimmed
   result=$(sanitize_branch_name "Test__Feature")
@@ -123,6 +128,95 @@ test_newfeature_bracket_chars() {
     "feature/OM-1460_data_loader_loader_failed" "$current_branch"
 }
 
+# Test: Git helper - newfeature with a dotted identifier in the title.
+# Regression: punctuation used to be deleted rather than treated as a word
+# separator, so "catalog.my_table" collapsed into "catalogmy_table". Backticks
+# and angle brackets are also stripped safely.
+test_newfeature_dotted_identifier() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  newfeature 'OM-900: create `<env>_catalog.my_table` in all envs' >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "Dotted identifiers keep word boundaries" \
+    "feature/OM-900_create_env_catalog_my_table_in_all_envs" "$current_branch"
+}
+
+# Test: Git helper - newfeature truncates at a word boundary, not mid-word.
+test_newfeature_truncates_on_word_boundary() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  newfeature "OM-901: add a very long descriptive branch name that exceeds the limit" >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "Truncates back to the last whole word" \
+    "feature/OM-901_add_a_very_long_descriptive_branch_name_that" "$current_branch"
+  assert_success "Truncated name stays within 60 chars" \
+    test "${#current_branch}" -le 60
+}
+
+# Test: Git helper - newfeature honours --prefix
+test_newfeature_custom_prefix() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  newfeature --prefix hotfix "OM-755: fix login bug" >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "Creates branch under a custom prefix" "hotfix/OM-755_fix_login_bug" "$current_branch"
+}
+
+# Test: Git helper - newfeature honours --no-prefix
+test_newfeature_no_prefix() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  newfeature --no-prefix "spike idea" >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "Creates a bare branch with no prefix" "spike_idea" "$current_branch"
+}
+
+# Test: Git helper - newfeature honours $HANIF_NF_PREFIX
+test_newfeature_env_prefix() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  HANIF_NF_PREFIX=bugfix newfeature "OM-756: bad join" >/dev/null 2>&1
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_equals "HANIF_NF_PREFIX sets the default prefix" "bugfix/OM-756_bad_join" "$current_branch"
+}
+
+# Test: Git helper - newfeature refuses a description that sanitizes to nothing
+# instead of handing git a bare "feature/" ref.
+test_newfeature_empty_after_sanitize() {
+  source "$UTILS_DIR/common.sh"
+  source "$FUNCTIONS_DIR/git-functions.sh"
+
+  local before
+  before=$(git rev-parse --abbrev-ref HEAD)
+
+  assert_failure "Refuses a description with no usable characters" \
+    newfeature '!!!'
+
+  local after
+  after=$(git rev-parse --abbrev-ref HEAD)
+  assert_equals "Branch is unchanged after refusal" "$before" "$after"
+}
+
 # Test: CLI executable exists
 test_cli_executable() {
   assert_file_exists "Main CLI executable exists" "$PROJECT_ROOT/bin/hanif"
@@ -175,6 +269,12 @@ main() {
   run_test test_newfeature_with_ticket
   run_test test_newfeature_special_chars
   run_test test_newfeature_bracket_chars
+  run_test test_newfeature_dotted_identifier
+  run_test test_newfeature_truncates_on_word_boundary
+  run_test test_newfeature_custom_prefix
+  run_test test_newfeature_no_prefix
+  run_test test_newfeature_env_prefix
+  run_test test_newfeature_empty_after_sanitize
   
   suite "CLI Interface"
   test_cli_executable

@@ -132,8 +132,8 @@ OTHER COMMANDS
 EXAMPLES
   hanif sync
   hanif nf add login form
-  hanif nf "JIRA-123: add feature"
-    → Creates: feature/jira-123_add_feature
+  hanif nf 'JIRA-123: add feature'
+    → Creates: feature/JIRA-123_add_feature
   hanif squash 5
   hanif svg convert logo.svg 64,128,256
   hanif gi .env

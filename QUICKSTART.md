@@ -17,7 +17,7 @@ hanif help
 | Command | What it does |
 |---------|-------------|
 | `hanif sync` | Update main, rebase, cleanup |
-| `hanif nf <desc>` | Create feature branch (multi-word, no quotes needed) |
+| `hanif nf <desc>` | Create a branch (multi-word ok; `--prefix` to override `feature/`) |
 | `hanif up` | Update main branch |
 | `hanif upall` | Update all branches |
 | `hanif clean` | Delete branches removed from remote |
@@ -34,9 +34,16 @@ hanif help
 hanif nf add user authentication
 # → feature/add_user_authentication
 
-# With ticket number
-hanif nf "OM-755: fix login bug"
-# → feature/om-755_fix_login_bug
+# With ticket number (single quotes keep ` < > $ intact)
+hanif nf 'OM-755: fix login bug'
+# → feature/OM-755_fix_login_bug
+
+# No arguments → prompts for the description (paste anything, no quoting)
+hanif nf
+
+# Override the feature/ prefix
+hanif nf --prefix hotfix 'OM-756: patch login'
+# → hotfix/OM-756_patch_login
 
 # Full sync (update, rebase, clean)
 hanif sync

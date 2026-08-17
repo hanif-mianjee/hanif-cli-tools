@@ -109,22 +109,50 @@ git_sync_handler() {
 
 git_nf_handler() {
   _git_load_funcs
+
+  # Only treat help as help when it is the *sole* argument, so a description
+  # may legitimately begin with the word "help" (hanif nf help text is wrong).
+  if [[ $# -eq 1 ]]; then
+    case "$1" in
+      help|--help|-h) show_git_help; return 0 ;;
+    esac
+  fi
+
   if [[ $# -eq 0 ]]; then
-    error "Usage: hanif nf <description>"
+    # Prompt instead of erroring when a human is at the keyboard. ``read -r``
+    # performs no expansion whatsoever, so this is the only input path that
+    # survives backticks, <, > and $ intact — the shell would otherwise mangle
+    # them (command substitution / redirection) long before hanif is reached.
+    if [[ -t 0 ]]; then
+      echo "" >&2
+      _hanif_render 1 "${BOLD}${MAGENTA}🌿  New branch${NC}" >&2; printf '\n' >&2
+      hint "   (paste the ticket title as-is — no quoting needed)" >&2
+      local nf_prompt
+      nf_prompt=$(_hanif_render 1 "${YELLOW}?${NC}  Description: ")
+      printf '%s' "$nf_prompt" >&2
+      local description=""
+      IFS= read -r description || return 1
+      if [[ -z "$description" ]]; then
+        error "No description given"
+        return 1
+      fi
+      newfeature "$description"
+      return $?
+    fi
+    error "Usage: hanif nf [--prefix <p>|--no-prefix] <description>"
     hint "  hanif nf add login form"
-    hint "  hanif nf \"JIRA-123: add login form\""
+    hint "  hanif nf 'JIRA-123: add login form'"
+    hint "  hanif nf              (prompts — safest for titles with \` < > \$)"
     return 1
   fi
-  case "${1:-}" in
-    help|--help|-h) show_git_help; return 0 ;;
-  esac
+
   # Accept multi-word descriptions without requiring quotes — mirrors how
-  # ``hanif squash`` reads multi-word commit messages. ``"$*"`` joins all
-  # arguments with a single space so:
+  # ``hanif squash`` reads multi-word commit messages. ``newfeature`` strips
+  # any leading flags and joins the rest with a single space, so:
   #   hanif nf add login form          → "add login form"
-  #   hanif nf "JIRA-123: add login"   → "JIRA-123: add login"
+  #   hanif nf 'JIRA-123: add login'   → "JIRA-123: add login"
   # both produce the same result.
-  newfeature "$*"
+  newfeature "$@"
 }
 
 git_up_handler()    { _git_load_funcs; _git_help_or_run gitup    "$@"; }
@@ -192,7 +220,7 @@ Usage: hanif <command> [options]
 
 Commands:
   sync                     Full sync (update, rebase, clean)
-  nf, newfeature <desc>    Create feature branch (multi-word, no quotes needed)
+  nf, newfeature <desc>    Create a branch (multi-word ok; --prefix to override)
   up, update               Update main branch
   upall, updateall         Update all branches
   clean                    Delete branches removed from remote
@@ -206,8 +234,10 @@ Commands:
 Examples:
   hanif sync
   hanif nf add login form
-  hanif nf "JIRA-123: add feature"
-    → Creates: feature/jira-123_add_feature
+  hanif nf 'JIRA-123: add feature'
+    → Creates: feature/JIRA-123_add_feature
+  hanif nf --prefix hotfix 'JIRA-124: patch login'
+    → Creates: hotfix/JIRA-124_patch_login
   hanif rb main
 
 Tip: `hanif git <command>` also works (legacy syntax)
@@ -228,20 +258,43 @@ SYNC
   Does: Update main → Rebase current → Clean old branches
 
 NEWFEATURE (nf)
-  Create feature branch with smart naming
+  Create a branch with smart naming
   Automatically extracts JIRA/ticket numbers
   Multi-word descriptions work without quotes
+
+  hanif nf [--prefix <p> | --no-prefix] <description>
 
   hanif nf add login
     → feature/add_login
 
   hanif nf JIRA-123 fix bug
-    → feature/jira-123_fix_bug
+    → feature/JIRA-123_fix_bug
 
-  hanif nf "OM-456 implement feature"
-    → feature/om-456_implement_feature
+  hanif nf 'OM-456 implement feature'
+    → feature/OM-456_implement_feature
 
   Supports: JIRA-123, ABC-456, OM-789, etc.
+
+  BRANCH PREFIX
+    Defaults to "feature". Resolution order:
+      1. --prefix <p> / -p <p> / --no-prefix   (this run only)
+      2. $HANIF_NF_PREFIX                      (hanif env set HANIF_NF_PREFIX bugfix)
+      3. feature
+
+    hanif nf --prefix hotfix 'OM-9: patch login'
+      → hotfix/OM-9_patch_login
+
+    hanif nf --no-prefix 'spike idea'
+      → spike_idea
+
+  TITLES WITH SPECIAL CHARACTERS
+    Backticks, <, > and $ are interpreted by your shell before hanif ever
+    runs — double quotes do NOT protect them, and content is silently lost.
+    Use single quotes, or run bare `hanif nf` and paste at the prompt:
+
+      hanif nf
+      ?  Description: OM-900: create `<env>_catalog.my_table` in all envs
+        → feature/OM-900_create_env_catalog_my_table_in_all_envs
 
 UPDATE (up)
   Update main/master branch

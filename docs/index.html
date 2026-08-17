@@ -200,7 +200,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 6h6a3 3 0 0 1 3 3v0M9 18h6a3 3 0 0 0 3-3v0" stroke-linecap="round"/></svg>
             </span>
             <h3>Smart branch names</h3>
-            <p><code>hanif nf add user auth</code> becomes <code>feature/add_user_auth</code>. Ticket numbers are detected; names get sanitized; no quotes required.</p>
+            <p><code>hanif nf add user auth</code> becomes <code>feature/add_user_auth</code>. Ticket numbers are detected; names get sanitized; no quotes required. Override the prefix with <code>--prefix</code>.</p>
             <a class="feature-link" href="#cmd-nf">Naming examples →</a>
           </article>
 
@@ -298,7 +298,7 @@
               <h3>Git workflow — <code>sync</code>, <code>up</code>, <code>upall</code>, <code>clean</code>, <code>rb</code>, <code>pull</code>, <code>st</code>, <code>amend</code></h3>
               <div class="cmd-subtitle">The everyday choreography of working on a feature branch — wrapped up.</div>
               <div class="cmd-aliases">
-                <span class="tag">hanif sync</span><span class="tag">hanif up</span><span class="tag">hanif upall</span><span class="tag">hanif clean</span><span class="tag">hanif rb &lt;branch&gt;</span><span class="tag">hanif pull</span><span class="tag">hanif st</span><span class="tag">hanif amend</span>
+                <span class="tag">hanif sync</span><span class="tag">hanif nf &lt;desc&gt;</span><span class="tag">hanif nf --prefix &lt;p&gt;</span><span class="tag">hanif up</span><span class="tag">hanif upall</span><span class="tag">hanif clean</span><span class="tag">hanif rb &lt;branch&gt;</span><span class="tag">hanif pull</span><span class="tag">hanif st</span><span class="tag">hanif amend</span>
               </div>
             </div>
           </header>
@@ -321,17 +321,25 @@
 
           <div class="scenario">
             <h4>Scenario: Start a new ticket without reaching for quotes</h4>
-            <p><code>hanif nf</code> sanitizes your description, lower‑cases it, extracts ticket IDs, and enforces a 60‑char ceiling so your CI doesn't choke on absurd refs.</p>
+            <p><code>hanif nf</code> sanitizes your description, lower‑cases it, extracts ticket IDs, and enforces a 60‑char ceiling so your CI doesn't choke on absurd refs. Punctuation separates words rather than being dropped, so dotted identifiers stay readable.</p>
             <div class="code-block">
               <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
 <pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">add user authentication</span>
 <span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/add_user_authentication</span>
 
-<span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">"OM-755: fix login bug on Safari"</span>
-<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/om-755_fix_login_bug_on_safari</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">'OM-755: fix login bug on Safari'</span>
+<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/OM-755_fix_login_bug_on_safari</span>
 
-<span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">JIRA-123 quick patch</span>
-<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/jira-123_quick_patch</span>
+<span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span> <span class="sh-arg">--prefix hotfix 'OM-756: patch login'</span>
+<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">hotfix/OM-756_patch_login</span>
+</pre>
+            </div>
+            <p>Titles containing <code>`</code>, <code>&lt;</code>, <code>&gt;</code> or <code>$</code> are rewritten by your <em>shell</em> before hanif sees them — and double quotes do <strong>not</strong> protect them. Single‑quote the title, or run bare <code>hanif nf</code> and paste it at the prompt:</p>
+            <div class="code-block">
+              <button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button>
+<pre><span class="sh-prompt">$</span> <span class="sh-cmd">hanif nf</span>
+<span class="sh-arg">?  Description:</span> OM-900: create `&lt;env&gt;_catalog.my_table` in all envs
+<span class="sh-ok">✓</span> Switched to a new branch <span class="sh-arg">feature/OM-900_create_env_catalog_my_table_in_all_envs</span>
 </pre>
             </div>
           </div>
