@@ -15,10 +15,12 @@ _HANIF_PR_BRANCH_RE='^[A-Za-z0-9._/+-]+$'
 # Remote URL parsing
 # ---------------------------------------------------------------------------
 
-# Normalise a git remote URL into "host\towner\trepo" (TAB-separated).
-# Handles SSH (`git@github.com:owner/repo.git`),
+# Normalise a git remote URL into "host\towner\trepo" (TAB-separated), or
+# "host\torg\tproject\trepo" (4 fields) for Azure DevOps.
+# Handles SCP-style SSH (`git@github.com:owner/repo.git`),
+# `ssh://` URLs (with or without an explicit port),
 # HTTPS (`https://github.com/owner/repo.git`),
-# git protocol, and Azure DevOps' two URL flavours.
+# and Azure DevOps' several URL flavours.
 # Echoes nothing and returns 1 if the URL cannot be parsed.
 _hanif_pr_parse_remote() {
   local url="$1"
@@ -32,31 +34,25 @@ _hanif_pr_parse_remote() {
     # SSH SCP form: user@host:path  (any username, e.g. git@ or org@)
     host="${BASH_REMATCH[1]}"
     local path="${BASH_REMATCH[2]}"
-    # Azure DevOps SCP SSH: user@vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>
-    if [[ "$host" == vs-ssh.visualstudio.com ]]; then
-      host="dev.azure.com"
-      path="${path#v3/}"
-      if [[ "$path" =~ ^([^/]+)/([^/]+)/([^/]+)$ ]]; then
-        printf '%s\t%s\t%s\t%s\n' "$host" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
-        return 0
-      fi
-      return 1
+    # Azure DevOps SCP SSH: user@ssh.dev.azure.com:v3/<org>/<project>/<repo>
+    #                       user@vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>
+    if [[ "$host" == ssh.dev.azure.com || "$host" == vs-ssh.visualstudio.com ]]; then
+      _hanif_pr_azure_v3 "$path"
+      return $?
     fi
     _hanif_pr_split_path "$host" "$path"
     return $?
   elif [[ "$url" =~ ^ssh://([^@/]+@)?([^/]+)/(.+)$ ]]; then
     host="${BASH_REMATCH[2]}"
     local path="${BASH_REMATCH[3]}"
+    # Drop an explicit port (ssh://git@host:22/path) — the host capture above
+    # swallows it, which would break the host comparisons and URL building.
+    host="${host%%:[0-9]*}"
     # Azure DevOps SSH: ssh://git@ssh.dev.azure.com/v3/<org>/<project>/<repo>
     #                   ssh://user@vs-ssh.visualstudio.com/v3/<org>/<project>/<repo>
     if [[ "$host" == ssh.dev.azure.com || "$host" == vs-ssh.visualstudio.com ]]; then
-      host="dev.azure.com"
-      path="${path#v3/}"
-      if [[ "$path" =~ ^([^/]+)/([^/]+)/([^/]+)$ ]]; then
-        printf '%s\t%s\t%s\t%s\n' "$host" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
-        return 0
-      fi
-      return 1
+      _hanif_pr_azure_v3 "$path"
+      return $?
     fi
     _hanif_pr_split_path "$host" "$path"
     return $?
@@ -87,6 +83,17 @@ _hanif_pr_parse_remote() {
     return $?
   fi
   return 1
+}
+
+# Emit "dev.azure.com\torg\tproject\trepo" from an Azure DevOps SSH path of the
+# form "v3/<org>/<project>/<repo>". Both SSH flavours (SCP-style and ssh://)
+# use this layout, and both must report the *web* host (dev.azure.com) because
+# that is the only host _hanif_pr_build_url knows how to build Azure URLs for.
+_hanif_pr_azure_v3() {
+  local path="${1#v3/}"
+  [[ "$path" =~ ^([^/]+)/([^/]+)/([^/]+)$ ]] || return 1
+  printf '%s\t%s\t%s\t%s\n' "dev.azure.com" \
+    "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
 }
 
 # Split a "owner/repo" path for hosts that follow that flat layout.

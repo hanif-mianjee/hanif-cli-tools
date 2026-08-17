@@ -110,6 +110,28 @@ test_pr_azure_devops_ssh_url() {
     "https://dev.azure.com/myorg/myproj/_git/myrepo/pullrequestcreate?sourceRef=feature/login_form&targetRef=master"
 }
 
+# Regression: the SCP form on ssh.dev.azure.com — the URL Azure DevOps hands
+# out for most orgs — was parsed as a plain owner/repo host, so the host was
+# never rewritten to dev.azure.com and `hanif pr` failed with
+# "Unsupported remote host: ssh.dev.azure.com".
+test_pr_azure_devops_ssh_scp_host() {
+  _set_remote "git@ssh.dev.azure.com:v3/myorg/myproj/myrepo"
+  local out
+  out=$(cd "$TEST_REPO" && "$HANIF" pr url 2>&1)
+  assert_contains "Azure DevOps SCP SSH (ssh.dev.azure.com) parses" "$out" \
+    "https://dev.azure.com/myorg/myproj/_git/myrepo/pullrequestcreate?sourceRef=feature/login_form&targetRef=master"
+}
+
+# Regression: an explicit port was captured as part of the host, producing
+# "Unsupported remote host: ssh.dev.azure.com:22".
+test_pr_azure_devops_ssh_port() {
+  _set_remote "ssh://git@ssh.dev.azure.com:22/v3/myorg/myproj/myrepo"
+  local out
+  out=$(cd "$TEST_REPO" && "$HANIF" pr url 2>&1)
+  assert_contains "Azure DevOps ssh:// URL with explicit port parses" "$out" \
+    "https://dev.azure.com/myorg/myproj/_git/myrepo/pullrequestcreate?sourceRef=feature/login_form&targetRef=master"
+}
+
 test_pr_custom_base() {
   _set_remote "git@github.com:foo/bar.git"
   local out
@@ -194,6 +216,8 @@ main() {
   run_test test_pr_bitbucket
   run_test test_pr_azure_devops_ssh_scp
   run_test test_pr_azure_devops_ssh_url
+  run_test test_pr_azure_devops_ssh_scp_host
+  run_test test_pr_azure_devops_ssh_port
   run_test test_pr_custom_base
   run_test test_pr_open_action_prints_url_with_no_browser
 
