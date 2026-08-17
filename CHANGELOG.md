@@ -15,9 +15,20 @@
   - Non-interactive mode for CI / automation: `HANIF_PRE_COMMIT_YES=1`, `HANIF_PRE_COMMIT_CHECKS=<id-list>`, `HANIF_PRE_COMMIT_CUSTOM=<cmds>`.
 - **`hanif squash <hash>`**: skip the interactive picker by passing a commit hash directly. Hanif squashes every commit from `<hash>` through `HEAD` into one, with the same custom-message prompt as the picker flow.
 - **`hanif squash <older> <newer>`**: squash an inclusive commit range without losing the work that came after it. Hanif squashes `<older>..<newer>` into a single commit, then cherry-picks every commit that was on top of `<newer>` back on. Refuses to run with a dirty working tree, a detached `HEAD`, or when `<older>` is not an ancestor of `<newer>`. Prints the original `HEAD` so you can recover via `git reset --hard <hash>` if anything goes wrong. Pure-digit arguments still mean "count" — backwards compatible with `hanif squash 5`.
+- **`hanif nf` branch prefix is now configurable.** Branches no longer have to start with `feature/`:
+  - `--prefix <p>` / `-p <p>` sets the prefix for a single run (`hanif nf --prefix hotfix 'OM-9: patch login'` → `hotfix/OM-9_patch_login`).
+  - `--no-prefix` creates a bare branch with no prefix at all (`spike_idea`).
+  - `HANIF_NF_PREFIX` sets your default for every run — persist it with `hanif env set HANIF_NF_PREFIX bugfix`.
+  - Resolution order is flag → `HANIF_NF_PREFIX` → `feature`.
+- **`hanif nf` with no arguments now prompts for the description.** Pasting at the prompt is the only input path your shell cannot interfere with, so ticket titles containing backticks, `<`, `>` or `$` arrive exactly as written. Scripted use (no TTY) still shows the usage error as before.
 
 ### Fixed
+- **`hanif pr`: `Unsupported remote host: ssh.dev.azure.com`.** The SCP-style Azure DevOps remote `git@ssh.dev.azure.com:v3/<org>/<project>/<repo>` — the URL Azure hands out for most organisations — was parsed as an ordinary `owner/repo` host, so the PR URL could never be built. `ssh://` URLs with an explicit port (`ssh://git@ssh.dev.azure.com:22/v3/…`) failed the same way and are fixed too.
+- **`hanif nf` no longer glues words together.** Punctuation in a description was deleted rather than treated as a word separator, so a title like ``OM-900: create table `<env>_catalog.my_table` `` produced `..._catalogmy_table...`. Dotted identifiers, common in table and package names, now read correctly as `..._catalog_my_table...`. The 60-character limit is unchanged, but truncation now trims back to the last whole word instead of cutting mid-word.
+- **`hanif nf` with a description that sanitizes to nothing** (e.g. `hanif nf '!!!'`) now fails with a clear message instead of asking git to create a branch literally named `feature/`.
+- **`hanif nf help me fix the login`** creates a branch again — `help` as the first word of a description no longer opens the help screen. `hanif nf help` on its own still does.
 - **`hanif nf`**: free-text descriptions containing shell glob characters (`[`, `]`, `*`, `?`) — common in Jira titles such as `OM-1460: [Data loader] - Loader Failed` — no longer cause a zsh `bad pattern` error. `install.sh` now writes `alias hanif='noglob hanif'` to `.zshrc`, which tells zsh to skip glob expansion for hanif arguments. Existing installs pick up the alias on the next `hanif self-update`. As always, quoting the whole description also works.
+- **`hanif squash` no longer stalls where no editor is available** (CI, cron, any non-interactive shell). The rebase used `squash`, which opens a commit-message editor; with no usable editor it left the branch part-way through the rebase, carrying git's own `# This is a combination of N commits.` message instead of the formatted one. It now uses `fixup`, which needs no editor, and the final message is written exactly as before.
 
 ## [1.1.1] - 2026-05-11
 
